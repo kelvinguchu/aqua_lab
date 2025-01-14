@@ -1,122 +1,90 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  PDFViewer,
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Image as PDFImage,
-} from "@react-pdf/renderer";
-import { v4 as uuidv4 } from "uuid";
-import { supabase } from "@/lib/supabase";
-
-const styles = StyleSheet.create({
-  page: {
-    padding: 30,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  logo: {
-    width: 100,
-    height: 50,
-  },
-  title: {
-    fontSize: 24,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  table: {
-    width: "100%",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: "#000",
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#000",
-  },
-  tableCell: {
-    padding: 5,
-    flex: 1,
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-  },
-  certNumber: {
-    marginTop: 20,
-    fontSize: 12,
-  },
-});
-
-const CertificatePDF = ({
-  certificateNumber,
-}: {
-  certificateNumber: string;
-}) => (
-  <Document>
-    <Page size='A4' style={styles.page}>
-      <View style={styles.header}>
-        <PDFImage src='/logo.png' style={styles.logo} />
-      </View>
-      <Text style={styles.title}>Certificate of Analysis</Text>
-      <View style={styles.table}>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Parameter</Text>
-          <Text style={styles.tableCell}>Result</Text>
-          <Text style={styles.tableCell}>Unit</Text>
-        </View>
-        {/* Add your table rows here */}
-      </View>
-      <Text style={styles.certNumber}>
-        Certificate Number: {certificateNumber}
-      </Text>
-    </Page>
-  </Document>
-);
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { CertificatesTable } from "@/components/certificates/certificates-table";
+import { CertificatesStats } from "@/components/certificates/certificates-stats";
+import { supabase, type Certificate } from "@/lib/supabase";
 
 export default function Home() {
-  const [certificateNumber, setCertificateNumber] = useState("");
+  const router = useRouter();
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const generateCertificate = async () => {
-    const newCertNumber = uuidv4();
-    setCertificateNumber(newCertNumber);
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      const { data, error } = await supabase
+        .from("certificates")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    // Save to Supabase
-    const { error } = await supabase
-      .from("certificates")
-      .insert([{ certificate_number: newCertNumber }]);
+      if (error) {
+        console.error("Error fetching certificates:", error);
+      } else {
+        setCertificates(data || []);
+      }
+      setLoading(false);
+    };
 
-    if (error) {
-      console.error("Error saving certificate:", error);
-    }
-  };
+    fetchCertificates();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary' />
+      </div>
+    );
+  }
 
   return (
-    <div className='min-h-screen p-8'>
-      <div className='max-w-4xl mx-auto'>
-        <h1 className='text-3xl font-bold mb-8'>Certificate Generator</h1>
-
-        <button
-          onClick={generateCertificate}
-          className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-8'>
-          Generate New Certificate
-        </button>
-
-        {certificateNumber && (
-          <div className='h-[800px]'>
-            <PDFViewer width='100%' height='100%'>
-              <CertificatePDF certificateNumber={certificateNumber} />
-            </PDFViewer>
+    <main className='container mx-auto py-10 px-4 sm:px-6 lg:px-8'>
+      <div className='flex flex-col gap-y-8'>
+        {/* Header */}
+        <div className='flex justify-between items-center'>
+          <div>
+            <h1 className='text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent'>
+              Certificates
+            </h1>
+            <p className='text-muted-foreground mt-2'>
+              Manage and generate water analysis certificates
+            </p>
           </div>
-        )}
+          <Button
+            onClick={() => router.push("/certificates/new")}
+            className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200'>
+            <Plus className='mr-2 h-4 w-4' />
+            New Certificate
+          </Button>
+        </div>
+
+        {/* Stats */}
+        <CertificatesStats certificates={certificates} />
+
+        {/* Table */}
+        <Card className='mt-8 overflow-hidden border-0 shadow-xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-lg'>
+          <CardHeader>
+            <CardTitle className='text-xl font-semibold'>
+              Recent Certificates
+            </CardTitle>
+            <CardDescription>
+              A list of all certificates and their current status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CertificatesTable certificates={certificates} />
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </main>
   );
 }
