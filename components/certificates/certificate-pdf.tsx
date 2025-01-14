@@ -19,7 +19,7 @@ import {
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Times-Roman",
-    backgroundColor: "#FFFDF0",
+    backgroundColor: "#FAEEC5",
     padding: 40,
     position: "relative",
   },
@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
   col6: { width: "15%" },
   footer: {
     marginTop: 5,
-    backgroundColor: "#FFFDF0",
   },
   footerText: {
     fontSize: 8,
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
   },
   legendSection: {
     marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   resultsSection: {
     marginTop: 10,
@@ -633,8 +632,9 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
 
         {/* Legend Section */}
         <View style={styles.legendSection}>
-          <Text style={styles.legend}>MPN: Most Probable Number</Text>
+          <Text style={styles.legend}>NS: Not Set Standard</Text>
           <Text style={styles.legend}>ND: Not Detected</Text>
+          <Text style={styles.legend}>MPN: Most Probable Number</Text>
           <Text style={styles.legend}>{">: Greater Than"}</Text>
           <Text style={styles.legend}>KS: Kenya Standard (KS EAS 12:2018)</Text>
         </View>
