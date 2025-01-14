@@ -124,12 +124,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 8,
-    marginBottom: 10,
+    marginBottom: 5,
     fontStyle: "italic",
   },
   signatureSection: {
     flexDirection: "row",
-    marginTop: 30,
+    marginTop: 15,
     justifyContent: "space-between",
     borderTop: "1pt solid #000",
     paddingTop: 20,
