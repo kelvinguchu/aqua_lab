@@ -5,6 +5,7 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // Initialize Supabase client
 const supabase = createBrowserClient(
@@ -27,14 +28,9 @@ export function Navbar() {
         <div className='flex items-center justify-between h-16'>
           {/* Logo */}
           <div className='flex-shrink-0'>
-            <Image
-              src='/logo.png'
-              alt='Aquatreat Solutions Ltd'
-              width={180}
-              height={40}
-              className='w-auto h-8'
-              priority
-            />
+            <Link href='/'>
+              <Image src='/logo.png' alt='Logo' width={170} height={70} />
+            </Link>
           </div>
 
           {/* Sign Out Button */}
