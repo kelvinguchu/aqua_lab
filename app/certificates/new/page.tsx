@@ -54,6 +54,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Initialize Supabase client
 const supabase = createBrowserClient(
@@ -406,7 +407,11 @@ export default function NewCertificatePage() {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (error) {

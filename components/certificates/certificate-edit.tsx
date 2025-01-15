@@ -40,6 +40,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Initialize Supabase client
 const supabase = createBrowserClient(
@@ -700,550 +701,676 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-        {error && (
-          <div className='bg-destructive/15 text-destructive p-3 rounded-md'>
-            {error}
+    <>
+      {isLoading && (
+        <div className='fixed inset-0 bg-background/80 backdrop-blur-sm z-50'>
+          <div className='fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]'>
+            <LoadingSpinner />
           </div>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Certificate Information</CardTitle>
-            <CardDescription>
-              Update the certificate details below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField
-                control={form.control}
-                name='certificate_id'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Certificate ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='sample_id'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sample ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField
-                control={form.control}
-                name='date_of_report'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Report</FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='outline'
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}>
-                            <CalendarIcon className='mr-2 h-4 w-4' />
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align='start' className='w-auto p-0'>
-                          <Calendar
-                            mode='single'
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='date_of_report_issue'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Report Issue</FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='outline'
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}>
-                            <CalendarIcon className='mr-2 h-4 w-4' />
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align='start' className='w-auto p-0'>
-                          <Calendar
-                            mode='single'
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField
-                control={form.control}
-                name='description_of_sample'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description of Sample</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='sample_source'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sample Source</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField
-                control={form.control}
-                name='submitted_by'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Submitted By</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='customer_contact'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Contact</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField
-                control={form.control}
-                name='sampled_by'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sampled By</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='date_of_sampling'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Sampling</FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='outline'
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}>
-                            <CalendarIcon className='mr-2 h-4 w-4' />
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align='start' className='w-auto p-0'>
-                          <Calendar
-                            mode='single'
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Results</CardTitle>
-            <CardDescription>
-              Update the test results and remarks below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type='single' collapsible className='w-full'>
-              {/* Physical Tests */}
-              <AccordionItem value='physical'>
-                <AccordionTrigger className='text-lg font-semibold'>
-                  Physical Tests
-                </AccordionTrigger>
-                <AccordionContent className='p-4 pt-2 grid gap-4'>
-                  {getParametersByCategory("physical").map((param) => (
-                    <div
-                      key={param.resultKey}
-                      className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name={param.resultKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Result</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type={
-                                  param.type === "number" ? "number" : "text"
-                                }
-                                step={
-                                  param.type === "number" ? "0.1" : undefined
-                                }
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={param.remarkKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Remark</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Chemical Tests (Anions) */}
-              <AccordionItem value='anions'>
-                <AccordionTrigger className='text-lg font-semibold'>
-                  Chemical Tests (Anions)
-                </AccordionTrigger>
-                <AccordionContent className='p-4 pt-2 grid gap-4'>
-                  {getParametersByCategory("anions").map((param) => (
-                    <div
-                      key={param.resultKey}
-                      className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name={param.resultKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Result</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type={
-                                  param.type === "number" ? "number" : "text"
-                                }
-                                step={
-                                  param.type === "number" ? "0.1" : undefined
-                                }
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={param.remarkKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Remark</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Chemical Tests (Cations) */}
-              <AccordionItem value='cations'>
-                <AccordionTrigger className='text-lg font-semibold'>
-                  Chemical Tests (Cations)
-                </AccordionTrigger>
-                <AccordionContent className='p-4 pt-2 grid gap-4'>
-                  {getParametersByCategory("cations").map((param) => (
-                    <div
-                      key={param.resultKey}
-                      className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name={param.resultKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Result</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type={
-                                  param.type === "number" ? "number" : "text"
-                                }
-                                step={
-                                  param.type === "number" ? "0.1" : undefined
-                                }
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={param.remarkKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Remark</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Other Parameters */}
-              <AccordionItem value='other'>
-                <AccordionTrigger className='text-lg font-semibold'>
-                  Other Parameters
-                </AccordionTrigger>
-                <AccordionContent className='p-4 pt-2 grid gap-4'>
-                  {getParametersByCategory("other").map((param) => (
-                    <div
-                      key={param.resultKey}
-                      className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name={param.resultKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Result</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type={
-                                  param.type === "number" ? "number" : "text"
-                                }
-                                step={
-                                  param.type === "number" ? "0.1" : undefined
-                                }
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={param.remarkKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Remark</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Microbiological Tests */}
-              <AccordionItem value='microbiological'>
-                <AccordionTrigger className='text-lg font-semibold'>
-                  Microbiological Tests
-                </AccordionTrigger>
-                <AccordionContent className='p-4 pt-2 grid gap-4'>
-                  {getParametersByCategory("microbiological").map((param) => (
-                    <div
-                      key={param.resultKey}
-                      className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name={param.resultKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Result</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder='ND'
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={param.remarkKey}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{param.label} Remark</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder='PASS'
-                                value={field.value?.toString() ?? ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Comments</CardTitle>
-            <CardDescription>
-              Add any additional comments or notes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name='comments'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Comments</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <div className='flex justify-end gap-4'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => router.push("/certificates")}>
-            Cancel
-          </Button>
-          <Button type='submit' disabled={isLoading}>
-            {isLoading ? "Updating..." : "Update Certificate"}
-          </Button>
         </div>
-      </form>
-    </Form>
+      )}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className='space-y-6 pb-10'>
+          {error && (
+            <div className='bg-destructive/15 text-destructive p-4 rounded-lg border border-destructive/20'>
+              {error}
+            </div>
+          )}
+
+          <Card className='shadow-sm'>
+            <CardHeader className='space-y-1'>
+              <CardTitle className='text-2xl'>
+                Certificate Information
+              </CardTitle>
+              <CardDescription className='text-base'>
+                Update the certificate details below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <FormField
+                  control={form.control}
+                  name='certificate_id'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Certificate ID
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled className='bg-muted/50' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='sample_id'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Sample ID
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <FormField
+                  control={form.control}
+                  name='date_of_report'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Date of Report
+                      </FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant='outline'
+                              className={cn(
+                                "w-full justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                                !field.value && "text-muted-foreground"
+                              )}>
+                              <CalendarIcon className='mr-2 h-4 w-4 opacity-50' />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align='start' className='w-auto p-0'>
+                            <Calendar
+                              mode='single'
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='date_of_report_issue'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Date of Report Issue
+                      </FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant='outline'
+                              className={cn(
+                                "w-full justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                                !field.value && "text-muted-foreground"
+                              )}>
+                              <CalendarIcon className='mr-2 h-4 w-4 opacity-50' />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align='start' className='w-auto p-0'>
+                            <Calendar
+                              mode='single'
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <FormField
+                  control={form.control}
+                  name='description_of_sample'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Description of Sample
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='sample_source'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Sample Source
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <FormField
+                  control={form.control}
+                  name='submitted_by'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Submitted By
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='customer_contact'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Customer Contact
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <FormField
+                  control={form.control}
+                  name='sampled_by'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Sampled By
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className='transition-colors focus:bg-background'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='date_of_sampling'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm font-medium'>
+                        Date of Sampling
+                      </FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant='outline'
+                              className={cn(
+                                "w-full justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                                !field.value && "text-muted-foreground"
+                              )}>
+                              <CalendarIcon className='mr-2 h-4 w-4 opacity-50' />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align='start' className='w-auto p-0'>
+                            <Calendar
+                              mode='single'
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='shadow-sm'>
+            <CardHeader className='space-y-1'>
+              <CardTitle className='text-2xl'>Test Results</CardTitle>
+              <CardDescription className='text-base'>
+                Update the test results and remarks below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type='single' collapsible className='w-full space-y-4'>
+                {/* Physical Tests */}
+                <AccordionItem
+                  value='physical'
+                  className='border rounded-lg px-6'>
+                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                    Physical Tests
+                  </AccordionTrigger>
+                  <AccordionContent className='pt-4 pb-6 px-2'>
+                    <div className='grid gap-6'>
+                      {getParametersByCategory("physical").map((param) => (
+                        <div
+                          key={param.resultKey}
+                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                          <FormField
+                            control={form.control}
+                            name={param.resultKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Result
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type={
+                                      param.type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    step={
+                                      param.type === "number"
+                                        ? "0.1"
+                                        : undefined
+                                    }
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={param.remarkKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Remark
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Chemical Tests (Anions) */}
+                <AccordionItem
+                  value='anions'
+                  className='border rounded-lg px-6'>
+                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                    Chemical Tests (Anions)
+                  </AccordionTrigger>
+                  <AccordionContent className='pt-4 pb-6 px-2'>
+                    <div className='grid gap-6'>
+                      {getParametersByCategory("anions").map((param) => (
+                        <div
+                          key={param.resultKey}
+                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                          <FormField
+                            control={form.control}
+                            name={param.resultKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Result
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type={
+                                      param.type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    step={
+                                      param.type === "number"
+                                        ? "0.1"
+                                        : undefined
+                                    }
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={param.remarkKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Remark
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Chemical Tests (Cations) */}
+                <AccordionItem
+                  value='cations'
+                  className='border rounded-lg px-6'>
+                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                    Chemical Tests (Cations)
+                  </AccordionTrigger>
+                  <AccordionContent className='pt-4 pb-6 px-2'>
+                    <div className='grid gap-6'>
+                      {getParametersByCategory("cations").map((param) => (
+                        <div
+                          key={param.resultKey}
+                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                          <FormField
+                            control={form.control}
+                            name={param.resultKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Result
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type={
+                                      param.type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    step={
+                                      param.type === "number"
+                                        ? "0.1"
+                                        : undefined
+                                    }
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={param.remarkKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Remark
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Other Parameters */}
+                <AccordionItem value='other' className='border rounded-lg px-6'>
+                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                    Other Parameters
+                  </AccordionTrigger>
+                  <AccordionContent className='pt-4 pb-6 px-2'>
+                    <div className='grid gap-6'>
+                      {getParametersByCategory("other").map((param) => (
+                        <div
+                          key={param.resultKey}
+                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                          <FormField
+                            control={form.control}
+                            name={param.resultKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Result
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type={
+                                      param.type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    step={
+                                      param.type === "number"
+                                        ? "0.1"
+                                        : undefined
+                                    }
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={param.remarkKey}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className='text-sm font-medium'>
+                                  {param.label} Remark
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value?.toString() ?? ""}
+                                    className='transition-colors focus:bg-background'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Microbiological Tests */}
+                <AccordionItem
+                  value='microbiological'
+                  className='border rounded-lg px-6'>
+                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                    Microbiological Tests
+                  </AccordionTrigger>
+                  <AccordionContent className='pt-4 pb-6 px-2'>
+                    <div className='grid gap-6'>
+                      {getParametersByCategory("microbiological").map(
+                        (param) => (
+                          <div
+                            key={param.resultKey}
+                            className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            <FormField
+                              control={form.control}
+                              name={param.resultKey}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className='text-sm font-medium'>
+                                    {param.label} Result
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder='ND'
+                                      value={field.value?.toString() ?? ""}
+                                      className='transition-colors focus:bg-background'
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={param.remarkKey}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className='text-sm font-medium'>
+                                    {param.label} Remark
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder='PASS'
+                                      value={field.value?.toString() ?? ""}
+                                      className='transition-colors focus:bg-background'
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card className='shadow-sm'>
+            <CardHeader className='space-y-1'>
+              <CardTitle className='text-2xl'>Comments</CardTitle>
+              <CardDescription className='text-base'>
+                Add any additional comments or notes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name='comments'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-sm font-medium'>
+                      Comments
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className='min-h-[100px] resize-y transition-colors focus:bg-background'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <div className='flex justify-end gap-4 pt-4'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => router.push("/certificates")}
+              className='min-w-[100px] transition-colors hover:bg-accent'>
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              disabled={isLoading}
+              className='min-w-[100px] transition-colors'>
+              {isLoading ? "Updating..." : "Update Certificate"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }

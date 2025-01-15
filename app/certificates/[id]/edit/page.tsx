@@ -16,6 +16,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Initialize Supabase client
 const supabase = createBrowserClient(
@@ -63,7 +64,7 @@ export default function EditCertificatePage({
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary' />
+        <LoadingSpinner />
       </div>
     );
   }
