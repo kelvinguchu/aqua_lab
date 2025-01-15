@@ -28,7 +28,7 @@ export function Navbar() {
         <div className='flex items-center justify-between h-16'>
           {/* Logo */}
           <div className='flex-shrink-0'>
-            <Link href='/'>
+            <Link href='/dashboard'>
               <Image src='/logo.png' alt='Logo' width={170} height={70} />
             </Link>
           </div>
