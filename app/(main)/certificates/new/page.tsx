@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -10,6 +10,7 @@ import { CalendarIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import type { Certificate } from "@/lib/supabase";
 import { createBrowserClient } from "@supabase/ssr";
+import { useToast } from "@/hooks/use-toast";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -160,10 +161,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const CACHE_KEY = "certificate_form_draft";
+const AUTO_SAVE_DELAY = 1000; // 1 second
+
 export default function NewCertificatePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [formData, setFormData] = useState<FormValues | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -181,14 +189,12 @@ export default function NewCertificatePage() {
       date_sample_received: new Date(),
       date_of_analysis: new Date(),
       comments: "",
-      // Add default values for all test parameters
       ...Object.fromEntries(
         TEST_PARAMETERS.flatMap((param) => [
           [param.resultKey, ""],
           [param.remarkKey, ""],
         ])
       ),
-      // Add default values for microbiological tests
       total_viable_counts_result: "",
       total_viable_counts_remark: "",
       coliforms_mpn_result: "",
@@ -200,17 +206,20 @@ export default function NewCertificatePage() {
     },
   });
 
+  // Load cached form data
   useEffect(() => {
-    const initializeCertificateId = async () => {
+    const loadCachedForm = async () => {
       try {
         setLoading(true);
+        // Generate certificate ID
         const certificateId = await generateCertificateId();
         form.setValue("certificate_id", certificateId);
 
-        // Load cached form data if it exists
-        const cachedData = localStorage.getItem("certificate_form_data");
+        // Load cached form data
+        const cachedData = localStorage.getItem(CACHE_KEY);
         if (cachedData) {
           const parsedData = JSON.parse(cachedData);
+
           // Convert date strings back to Date objects
           const dateFields = [
             "date_of_report",
@@ -219,32 +228,70 @@ export default function NewCertificatePage() {
             "date_sample_received",
             "date_of_analysis",
           ];
+
           dateFields.forEach((field) => {
             if (parsedData[field]) {
               parsedData[field] = new Date(parsedData[field]);
             }
           });
-          form.reset(parsedData);
+
+          // Keep the new certificate ID but load other cached data
+          form.reset({ ...parsedData, certificate_id: certificateId });
+          toast({
+            title: "Draft Restored",
+            description: "Your previous work has been restored from cache.",
+          });
         }
       } catch (error) {
-        setError("Failed to generate certificate ID. Please try again.");
-        console.error("Error:", error);
+        console.error("Error loading cached form:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load cached form",
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    initializeCertificateId();
-  }, [form]);
+    loadCachedForm();
+  }, [form, toast]);
 
-  // Save form data to localStorage whenever it changes
+  // Watch form changes and update state
   useEffect(() => {
     const subscription = form.watch((data) => {
-      localStorage.setItem("certificate_form_data", JSON.stringify(data));
+      setFormData(data as FormValues);
     });
     return () => subscription.unsubscribe();
   }, [form]);
 
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!formData) return;
+
+    const handler = setTimeout(() => {
+      try {
+        setIsSaving(true);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(formData));
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Error saving form:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save draft",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }, AUTO_SAVE_DELAY);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formData, toast]);
+
+  // Handle form submission
   async function onSubmit(values: FormValues) {
     try {
       setLoading(true);
@@ -394,59 +441,79 @@ export default function NewCertificatePage() {
 
       // Cleanup
       URL.revokeObjectURL(url);
-      localStorage.removeItem("certificate_form_data"); // Clear cached form data
+      localStorage.removeItem(CACHE_KEY); // Clear cached form data
 
       // Redirect to home page
       router.push("/");
+      toast({
+        title: "Success",
+        description: "Certificate created successfully",
+      });
     } catch (error) {
       console.error("Error:", error);
       setError("An error occurred. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create certificate",
+      });
     } finally {
       setLoading(false);
     }
   }
 
+  // Handle form discard
+  const handleDiscard = () => {
+    if (window.confirm("Are you sure you want to discard this draft?")) {
+      localStorage.removeItem(CACHE_KEY);
+      router.push("/dashboard");
+      toast({
+        title: "Draft Discarded",
+        description: "Your draft has been discarded",
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
+      <div className='flex items-center justify-center min-h-screen pt-16'>
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div>
-        <p>{error}</p>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
   }
 
   return (
     <div className='container py-10'>
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href='/' asChild>
-              <Link href='/'>
-                <HomeIcon className='h-4 w-4' />
-                <span className='sr-only'>Certificates</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>New Certificate</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className='flex items-center justify-between mb-8'>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href='/dashboard' asChild>
+                <Link href='/dashboard'>
+                  <HomeIcon className='h-4 w-4' />
+                  <span className='sr-only'>Dashboard</span>
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>New Certificate</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-      <div className='mb-8 mt-4'>
+        {/* Auto-save indicator */}
+        <div className='text-sm text-muted-foreground'>
+          {isSaving ? (
+            <span>Saving draft...</span>
+          ) : lastSaved ? (
+            <span>Last saved {format(lastSaved, "HH:mm:ss")}</span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className='mb-8'>
         <h1 className='text-3xl font-bold'>New Certificate</h1>
-        <p className='text-muted-foreground'>
-          Create a new laboratory test report certificate.
-        </p>
       </div>
 
       <Form {...form}>
@@ -1233,11 +1300,8 @@ export default function NewCertificatePage() {
           </Card>
 
           <div className='flex justify-end gap-4'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => router.push("/certificates")}>
-              Cancel
+            <Button type='button' variant='outline' onClick={handleDiscard}>
+              Discard
             </Button>
             <Button type='submit' disabled={loading}>
               {loading ? "Creating..." : "Create Certificate"}

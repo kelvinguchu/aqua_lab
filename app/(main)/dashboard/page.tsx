@@ -1,40 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { CertificatesTable } from "@/components/certificates/certificates-table";
 import { supabase } from "@/lib/supabase";
 import type { Certificate } from "@/lib/supabase";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+// Fetch function for certificates
+const fetchCertificates = async () => {
+  const { data, error } = await supabase
+    .from("certificates")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
 
 export default function Dashboard() {
   const router = useRouter();
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      const { data, error } = await supabase
-        .from("certificates")
-        .select("*")
-        .order("created_at", { ascending: false });
+  // Use React Query for caching and automatic revalidation
+  const {
+    data: certificates = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<Certificate[], Error>({
+    queryKey: ["certificates"],
+    queryFn: fetchCertificates,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnReconnect: true, // Refetch when internet reconnects
+    retry: 3, // Retry failed requests 3 times
+  });
 
-      if (error) {
-        console.error("Error fetching certificates:", error);
-      } else {
-        setCertificates(data || []);
-      }
-      setLoading(false);
-    };
-
-    fetchCertificates();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-screen pt-16'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary' />
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8 pt-24'>
+        <Alert variant='destructive' className='mb-6'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error?.message || "Failed to load certificates"}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => refetch()}>Try Again</Button>
       </div>
     );
   }

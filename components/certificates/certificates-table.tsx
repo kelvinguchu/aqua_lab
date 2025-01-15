@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Plus } from "lucide-react";
+import { Plus, MoreHorizontal } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,11 +28,18 @@ import {
 import { Separator } from "@/components/ui/separator";
 import type { Certificate } from "@/lib/supabase";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CertificatesTableProps {
   certificates: Certificate[];
   onNew: () => void;
 }
+
+type TestCard = {
+  label: string;
+  result: string | number | null;
+  remark: string | null;
+};
 
 const getRemarkColor = (remark: string | null) => {
   if (!remark) return "text-muted-foreground";
@@ -49,14 +56,79 @@ export function CertificatesTable({
   onNew,
 }: CertificatesTableProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [selectedCertificate, setSelectedCertificate] =
     useState<Certificate | null>(null);
 
-  const renderTestCard = (test: {
-    label: string;
-    result: string | null;
-    remark: string | null;
-  }) => (
+  const generatePDF = async (certificate: Certificate) => {
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your report...",
+      });
+
+      // Create a display version of the certificate for PDF
+      const certificateDisplayData: Certificate = {
+        ...certificate,
+        date_of_report: format(
+          new Date(certificate.date_of_report),
+          "dd/MM/yyyy"
+        ),
+        date_of_sampling: format(
+          new Date(certificate.date_of_sampling),
+          "dd/MM/yyyy"
+        ),
+        date_sample_received: format(
+          new Date(certificate.date_sample_received),
+          "dd/MM/yyyy"
+        ),
+        date_of_analysis: format(
+          new Date(certificate.date_of_analysis),
+          "dd/MM/yyyy"
+        ),
+        date_of_report_issue: format(
+          new Date(certificate.date_of_report_issue),
+          "dd/MM/yyyy"
+        ),
+      };
+
+      // Generate PDF with display formatted dates
+      const { CertificatePDF } = await import(
+        "@/components/certificates/certificate-pdf"
+      );
+      const { pdf } = await import("@react-pdf/renderer");
+
+      const blob = await pdf(
+        <CertificatePDF certificate={certificateDisplayData} />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+
+      // Create download link and trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${certificate.certificate_id}-certificate.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Cleanup
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Report generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+      });
+    }
+  };
+
+  const renderTestCard = (test: TestCard) => (
     <div
       key={test.label}
       className='bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow'>
@@ -64,10 +136,10 @@ export function CertificatesTable({
         {test.label}
       </p>
       <p className='text-sm text-muted-foreground mt-1'>
-        Result: {test.result}
+        Result: {test.result?.toString() ?? "N/A"}
       </p>
       <p className={`text-sm ${getRemarkColor(test.remark)}`}>
-        Remark: {test.remark}
+        Remark: {test.remark ?? "N/A"}
       </p>
     </div>
   );
@@ -107,41 +179,26 @@ export function CertificatesTable({
                 <TableCell>{cert.sample_id}</TableCell>
                 <TableCell>{cert.sample_source}</TableCell>
                 <TableCell>
-                  {format(parseISO(cert.date_of_analysis), "MMM d, yyyy")}
+                  {format(new Date(cert.date_of_analysis), "dd/MM/yyyy")}
                 </TableCell>
                 <TableCell className='text-right'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant='ghost' className='h-8 w-8 p-0'>
                         <span className='sr-only'>Open menu</span>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          width='16'
-                          height='16'
-                          viewBox='0 0 24 24'
-                          fill='none'
-                          stroke='currentColor'
-                          strokeWidth='2'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          className='h-4 w-4'>
-                          <circle cx='12' cy='12' r='1' />
-                          <circle cx='12' cy='5' r='1' />
-                          <circle cx='12' cy='19' r='1' />
-                        </svg>
+                        <MoreHorizontal className='h-4 w-4' />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
-                        onClick={() => setSelectedCertificate(cert)}>
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
                         onClick={() =>
-                          router.push(`/certificates/${cert.id}/edit`)
+                          router.push(`/dashboard/edit/${cert.id}`)
                         }>
                         Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => generatePDF(cert)}>
+                        Generate Report
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
