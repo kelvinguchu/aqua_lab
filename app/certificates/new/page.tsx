@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { CalendarIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import type { Certificate } from "@/lib/supabase";
+import { createBrowserClient } from "@supabase/ssr";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   cn,
-  generateSampleId,
+  generateCertificateId,
   TEST_PARAMETERS,
   getParametersByCategory,
 } from "@/lib/utils";
@@ -54,11 +55,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Initialize Supabase client
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 // Create form schema
 const formSchema = z.object({
   // Header Information
+  certificate_id: z.string(),
   sample_id: z.string(),
   date_of_report: z.date(),
+  date_of_report_issue: z.date(),
   description_of_sample: z.string(),
   sample_source: z.string(),
   submitted_by: z.string(),
@@ -134,6 +143,16 @@ const formSchema = z.object({
   free_chlorine_result: z.string(),
   free_chlorine_remark: z.string(),
 
+  // Test Results - Microbiological Tests
+  total_viable_counts_result: z.string(),
+  total_viable_counts_remark: z.string(),
+  coliforms_mpn_result: z.string(),
+  coliforms_mpn_remark: z.string(),
+  ecoli_mpn_result: z.string(),
+  ecoli_mpn_remark: z.string(),
+  faecal_coliforms_mpn_result: z.string(),
+  faecal_coliforms_mpn_remark: z.string(),
+
   // Comments
   comments: z.string(),
 });
@@ -148,10 +167,15 @@ export default function NewCertificatePage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      certificate_id: "",
       sample_id: "",
       description_of_sample: "",
       sample_source: "",
+      submitted_by: "",
+      customer_contact: "",
+      sampled_by: "",
       date_of_report: new Date(),
+      date_of_report_issue: new Date(),
       date_of_sampling: new Date(),
       date_sample_received: new Date(),
       date_of_analysis: new Date(),
@@ -159,149 +183,217 @@ export default function NewCertificatePage() {
       // Add default values for all test parameters
       ...Object.fromEntries(
         TEST_PARAMETERS.flatMap((param) => [
-          [param.resultKey, "0"],
+          [param.resultKey, ""],
           [param.remarkKey, ""],
         ])
       ),
+      // Add default values for microbiological tests
+      total_viable_counts_result: "",
+      total_viable_counts_remark: "",
+      coliforms_mpn_result: "",
+      coliforms_mpn_remark: "",
+      ecoli_mpn_result: "",
+      ecoli_mpn_remark: "",
+      faecal_coliforms_mpn_result: "",
+      faecal_coliforms_mpn_remark: "",
     },
   });
 
   useEffect(() => {
-    const initializeSampleId = async () => {
+    const initializeCertificateId = async () => {
       try {
         setLoading(true);
-        const sampleId = await generateSampleId();
-        form.setValue("sample_id", sampleId);
+        const certificateId = await generateCertificateId();
+        form.setValue("certificate_id", certificateId);
+
+        // Load cached form data if it exists
+        const cachedData = localStorage.getItem("certificate_form_data");
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          // Convert date strings back to Date objects
+          const dateFields = [
+            "date_of_report",
+            "date_of_report_issue",
+            "date_of_sampling",
+            "date_sample_received",
+            "date_of_analysis",
+          ];
+          dateFields.forEach((field) => {
+            if (parsedData[field]) {
+              parsedData[field] = new Date(parsedData[field]);
+            }
+          });
+          form.reset(parsedData);
+        }
       } catch (error) {
-        setError("Failed to generate sample ID. Please try again.");
+        setError("Failed to generate certificate ID. Please try again.");
         console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    initializeSampleId();
+    initializeCertificateId();
   }, [form]);
 
-  async function onSubmit() {
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    const subscription = form.watch((data) => {
+      localStorage.setItem("certificate_form_data", JSON.stringify(data));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  async function onSubmit(values: FormValues) {
     try {
       setLoading(true);
 
-      // Hardcoded test data - ignore form values completely
-      const testData: Certificate = {
-        id: "1",
-        sample_id: "AQ-20240823-001",
-        description_of_sample: "TREATED WATER",
-        sample_source: "BIOFARMS LIMITED - THIKA",
-        submitted_by: "JOSEPH KAMIRI",
-        customer_contact: "LABAN - 0755570390",
-        sampled_by: "JOSEPH KAMIRI",
-        date_of_report: "23/08/2024",
-        date_of_sampling: "19/08/2024",
-        date_sample_received: "19/08/2024",
-        date_of_analysis: "20/08/2024",
-        date_of_report_issue: "23/08/2024",
+      // Format dates for display in PDF (DD/MM/YYYY)
+      const formatDisplayDate = (date: Date) => format(date, "dd/MM/yyyy");
+
+      // Format dates for database (YYYY-MM-DD)
+      const formatDatabaseDate = (date: Date) => format(date, "yyyy-MM-dd");
+
+      // Prepare certificate data from form values
+      const certificateData: Certificate = {
+        id: crypto.randomUUID(), // Generate a UUID for new certificate
+        certificate_id: values.certificate_id,
+        sample_id: values.sample_id,
+        description_of_sample: values.description_of_sample,
+        sample_source: values.sample_source,
+        submitted_by: values.submitted_by,
+        customer_contact: values.customer_contact,
+        sampled_by: values.sampled_by,
+        date_of_report: formatDatabaseDate(values.date_of_report),
+        date_of_sampling: formatDatabaseDate(values.date_of_sampling),
+        date_sample_received: formatDatabaseDate(values.date_sample_received),
+        date_of_analysis: formatDatabaseDate(values.date_of_analysis),
+        date_of_report_issue: formatDatabaseDate(values.date_of_report_issue),
 
         // Physical Tests
-        ph_result: 7.2,
-        ph_remark: "Within limits",
-        turbidity_result: 0.5,
-        turbidity_remark: "Clear",
-        color_result: "5",
-        color_remark: "Acceptable",
-        tss_result: "12",
-        tss_remark: "Pass",
-        tds_result: 450,
-        tds_remark: "Within range",
-        conductivity_result: 750,
-        conductivity_remark: "Normal",
+        ph_result: parseFloat(values.ph_result),
+        ph_remark: values.ph_remark,
+        turbidity_result: parseFloat(values.turbidity_result),
+        turbidity_remark: values.turbidity_remark,
+        color_result: values.color_result,
+        color_remark: values.color_remark,
+        tss_result: values.tss_result,
+        tss_remark: values.tss_remark,
+        tds_result: parseFloat(values.tds_result),
+        tds_remark: values.tds_remark,
+        conductivity_result: parseFloat(values.conductivity_result),
+        conductivity_remark: values.conductivity_remark,
+
         // Chemical Tests (Anions)
-        ph_alkalinity_result: "0",
-        ph_alkalinity_remark: "Normal",
-        total_alkalinity_result: 120,
-        total_alkalinity_remark: "Within range",
-        chloride_result: 85,
-        chloride_remark: "Acceptable",
-        fluoride_result: 0.8,
-        fluoride_remark: "Within limits",
-        sulfate_result: "95",
-        sulfate_remark: "Pass",
-        nitrate_result: 4.2,
-        nitrate_remark: "Within range",
-        nitrite_result: 0.02,
-        nitrite_remark: "Acceptable",
-        phosphate_result: 0.5,
-        phosphate_remark: "Normal",
-        sulfide_result: 0.1,
-        sulfide_remark: "Pass",
+        ph_alkalinity_result: values.ph_alkalinity_result,
+        ph_alkalinity_remark: values.ph_alkalinity_remark,
+        total_alkalinity_result: parseFloat(values.total_alkalinity_result),
+        total_alkalinity_remark: values.total_alkalinity_remark,
+        chloride_result: parseFloat(values.chloride_result),
+        chloride_remark: values.chloride_remark,
+        fluoride_result: parseFloat(values.fluoride_result),
+        fluoride_remark: values.fluoride_remark,
+        sulfate_result: values.sulfate_result,
+        sulfate_remark: values.sulfate_remark,
+        nitrate_result: parseFloat(values.nitrate_result),
+        nitrate_remark: values.nitrate_remark,
+        nitrite_result: parseFloat(values.nitrite_result),
+        nitrite_remark: values.nitrite_remark,
+        phosphate_result: parseFloat(values.phosphate_result),
+        phosphate_remark: values.phosphate_remark,
+        sulfide_result: parseFloat(values.sulfide_result),
+        sulfide_remark: values.sulfide_remark,
+
         // Chemical Tests (Cations)
-        potassium_result: 12,
-        potassium_remark: "Normal",
-        calcium_result: "80",
-        calcium_remark: "Within range",
-        magnesium_result: "30",
-        magnesium_remark: "Acceptable",
-        iron_result: 0.15,
-        iron_remark: "Within limits",
-        manganese_result: 0.05,
-        manganese_remark: "Pass",
-        ammonia_result: "0.2",
-        ammonia_remark: "Within range",
-        copper_result: 0.05,
-        copper_remark: "Acceptable",
-        zinc_result: 0.1,
-        zinc_remark: "Normal",
-        chromium_result: 0.01,
-        chromium_remark: "Pass",
+        potassium_result: parseFloat(values.potassium_result),
+        potassium_remark: values.potassium_remark,
+        calcium_result: values.calcium_result,
+        calcium_remark: values.calcium_remark,
+        magnesium_result: values.magnesium_result,
+        magnesium_remark: values.magnesium_remark,
+        iron_result: parseFloat(values.iron_result),
+        iron_remark: values.iron_remark,
+        manganese_result: parseFloat(values.manganese_result),
+        manganese_remark: values.manganese_remark,
+        ammonia_result: values.ammonia_result,
+        ammonia_remark: values.ammonia_remark,
+        copper_result: parseFloat(values.copper_result),
+        copper_remark: values.copper_remark,
+        zinc_result: parseFloat(values.zinc_result),
+        zinc_remark: values.zinc_remark,
+        chromium_result: parseFloat(values.chromium_result),
+        chromium_remark: values.chromium_remark,
+
         // Other Parameters
-        total_hardness_result: "300",
-        total_hardness_remark: "Moderate",
-        calcium_hardness_result: "200",
-        calcium_hardness_remark: "Normal",
-        magnesium_hardness_result: "100",
-        magnesium_hardness_remark: "Acceptable",
-        silica_result: "15",
-        silica_remark: "Within range",
-        free_chlorine_result: 0.3,
-        free_chlorine_remark: "Safe",
-        comments:
-          "Sample meets all required standards for treated water. All parameters are within acceptable limits for drinking water.",
+        total_hardness_result: values.total_hardness_result,
+        total_hardness_remark: values.total_hardness_remark,
+        calcium_hardness_result: values.calcium_hardness_result,
+        calcium_hardness_remark: values.calcium_hardness_remark,
+        magnesium_hardness_result: values.magnesium_hardness_result,
+        magnesium_hardness_remark: values.magnesium_hardness_remark,
+        silica_result: values.silica_result,
+        silica_remark: values.silica_remark,
+        free_chlorine_result: parseFloat(values.free_chlorine_result),
+        free_chlorine_remark: values.free_chlorine_remark,
+
+        // Microbiological Tests
+        total_viable_counts_result: values.total_viable_counts_result || "ND",
+        total_viable_counts_remark: values.total_viable_counts_remark || "PASS",
+        coliforms_mpn_result: values.coliforms_mpn_result || "ND",
+        coliforms_mpn_remark: values.coliforms_mpn_remark || "PASS",
+        ecoli_mpn_result: values.ecoli_mpn_result || "ND",
+        ecoli_mpn_remark: values.ecoli_mpn_remark || "PASS",
+        faecal_coliforms_mpn_result: values.faecal_coliforms_mpn_result || "ND",
+        faecal_coliforms_mpn_remark:
+          values.faecal_coliforms_mpn_remark || "PASS",
+
+        // Metadata
+        comments: values.comments,
         status: "draft" as const,
         created_at: new Date().toISOString(),
-
-        // Add microbiological test results
-        total_viable_counts_result: "ND",
-        total_viable_counts_remark: "PASS",
-        coliforms_mpn_result: "ND",
-        coliforms_mpn_remark: "PASS",
-        ecoli_mpn_result: "ND",
-        ecoli_mpn_remark: "PASS",
-        faecal_coliforms_mpn_result: "ND",
-        faecal_coliforms_mpn_remark: "PASS",
       };
 
-      // Import and use CertificatePDF component
+      // Create a display version of the certificate for PDF
+      const certificateDisplayData: Certificate = {
+        ...certificateData,
+        date_of_report: formatDisplayDate(values.date_of_report),
+        date_of_sampling: formatDisplayDate(values.date_of_sampling),
+        date_sample_received: formatDisplayDate(values.date_sample_received),
+        date_of_analysis: formatDisplayDate(values.date_of_analysis),
+        date_of_report_issue: formatDisplayDate(values.date_of_report_issue),
+      };
+
+      // Save to database
+      const { error: saveError } = await supabase
+        .from("certificates")
+        .insert([certificateData]);
+
+      if (saveError) {
+        throw new Error(`Failed to save certificate: ${saveError.message}`);
+      }
+
+      // Generate PDF with display formatted dates
       const { CertificatePDF } = await import(
         "@/components/certificates/certificate-pdf"
       );
       const { pdf } = await import("@react-pdf/renderer");
 
-      // Generate PDF
       const blob = await pdf(
-        <CertificatePDF certificate={testData} />
+        <CertificatePDF certificate={certificateDisplayData} />
       ).toBlob();
       const url = URL.createObjectURL(blob);
 
       // Create download link and trigger download
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${testData.sample_id}-certificate.pdf`;
+      link.download = `${certificateData.certificate_id}-certificate.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       // Cleanup
       URL.revokeObjectURL(url);
+      localStorage.removeItem("certificate_form_data"); // Clear cached form data
 
       // Redirect to home page
       router.push("/");
@@ -353,12 +445,7 @@ export default function NewCertificatePage() {
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-          className='space-y-8'>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
           {/* Header Information */}
           <Card>
             <CardHeader>
@@ -371,10 +458,10 @@ export default function NewCertificatePage() {
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
-                  name='sample_id'
+                  name='certificate_id'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sample ID</FormLabel>
+                      <FormLabel>Certificate ID</FormLabel>
                       <FormControl>
                         <Input {...field} disabled />
                       </FormControl>
@@ -384,10 +471,63 @@ export default function NewCertificatePage() {
                 />
                 <FormField
                   control={form.control}
+                  name='sample_id'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sample ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder='Enter sample ID' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={form.control}
                   name='date_of_report'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Date of Report</FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant='outline'
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}>
+                              <CalendarIcon className='mr-2 h-4 w-4' />
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align='start' className='w-auto p-0'>
+                            <Calendar
+                              mode='single'
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='date_of_report_issue'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Report Issue</FormLabel>
                       <FormControl>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -435,6 +575,9 @@ export default function NewCertificatePage() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='sample_source'
@@ -845,6 +988,206 @@ export default function NewCertificatePage() {
                           />
                         </div>
                       ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Microbiological Tests */}
+                <AccordionItem value='microbiological'>
+                  <AccordionTrigger>Microbiological Tests</AccordionTrigger>
+                  <AccordionContent>
+                    <div className='grid gap-4'>
+                      {/* Total Viable Counts */}
+                      <div className='grid grid-cols-2 gap-4'>
+                        <FormField
+                          control={form.control}
+                          name='total_viable_counts_result'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Total Viable Counts Result</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='ND'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name='total_viable_counts_remark'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Total Viable Counts Remark</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='PASS'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Coliforms */}
+                      <div className='grid grid-cols-2 gap-4'>
+                        <FormField
+                          control={form.control}
+                          name='coliforms_mpn_result'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coliforms MPN Result</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='ND'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name='coliforms_mpn_remark'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coliforms MPN Remark</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='PASS'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* E. coli */}
+                      <div className='grid grid-cols-2 gap-4'>
+                        <FormField
+                          control={form.control}
+                          name='ecoli_mpn_result'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>E. coli MPN Result</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='ND'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name='ecoli_mpn_remark'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>E. coli MPN Remark</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='PASS'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Faecal Coliforms */}
+                      <div className='grid grid-cols-2 gap-4'>
+                        <FormField
+                          control={form.control}
+                          name='faecal_coliforms_mpn_result'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Faecal Coliforms MPN Result</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='ND'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name='faecal_coliforms_mpn_remark'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Faecal Coliforms MPN Remark</FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  placeholder='PASS'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

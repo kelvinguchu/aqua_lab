@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export async function generateSampleId() {
+export async function generateCertificateId() {
   try {
     // Check if Supabase is properly initialized
     if (!supabase) {
@@ -21,9 +21,9 @@ export async function generateSampleId() {
     // Fetch certificates from today to get the latest sequence number
     const { data: certificates, error } = await supabase
       .from("certificates")
-      .select("sample_id")
-      .like("sample_id", `AQ-${dateStr}-%`)
-      .order("sample_id", { ascending: false })
+      .select("certificate_id")
+      .like("certificate_id", `AQ-${dateStr}-%`)
+      .order("certificate_id", { ascending: false })
       .limit(1);
 
     if (error) {
@@ -34,7 +34,7 @@ export async function generateSampleId() {
     let sequenceNumber = 1;
 
     if (certificates && certificates.length > 0) {
-      const lastId = certificates[0].sample_id;
+      const lastId = certificates[0].certificate_id;
       // Extract the sequence number from the last ID (format: AQ-YYYYMMDD-XXX)
       const match = lastId.match(/^AQ-\d{8}-(\d{3})$/);
       if (match) {
@@ -50,14 +50,8 @@ export async function generateSampleId() {
     // Format: AQ-YYYYMMDD-XXX (e.g., AQ-20240119-001)
     return `AQ-${dateStr}-${sequenceNumber.toString().padStart(3, "0")}`;
   } catch (error) {
-    console.error("Error in generateSampleId:", error);
-    // For fallback, still use a date-based format
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-    const timeStr =
-      now.getHours().toString().padStart(2, "0") +
-      now.getMinutes().toString().padStart(2, "0");
-    return `AQ-${dateStr}-${timeStr}`;
+    console.error("Error generating certificate ID:", error);
+    throw error;
   }
 }
 

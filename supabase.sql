@@ -111,3 +111,12 @@ ADD COLUMN ecoli_mpn_remark text,
 ADD COLUMN faecal_coliforms_mpn_result text,
 ADD COLUMN faecal_coliforms_mpn_remark text,
 ADD COLUMN date_of_report_issue date not null default CURRENT_DATE;
+
+
+-- Rename sample_id to certificate_id
+ALTER TABLE certificates 
+RENAME COLUMN sample_id TO certificate_id;
+
+-- Add new sample_id column
+ALTER TABLE certificates 
+ADD COLUMN sample_id text;

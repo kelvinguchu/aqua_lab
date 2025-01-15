@@ -388,6 +388,10 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
               </Text>
             </View>
             <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Certificate ID:</Text>
+              <Text style={styles.infoValue}>{certificate.certificate_id}</Text>
+            </View>
+            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Sample ID:</Text>
               <Text style={styles.infoValue}>{certificate.sample_id}</Text>
             </View>

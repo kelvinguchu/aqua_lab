@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type Certificate = {
   id: string;
   // Header Information (these change per certificate)
+  certificate_id: string;
   sample_id: string;
   date_of_report: string;
   description_of_sample: string;
