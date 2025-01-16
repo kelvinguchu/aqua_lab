@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect, use } from "react";
 import { CertificateEdit } from "@/components/certificates/certificate-edit";
-import { createBrowserClient } from "@supabase/ssr";
 import type { Certificate } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -17,12 +16,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-// Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase/client";
 
 export default function EditCertificatePage({
   params,

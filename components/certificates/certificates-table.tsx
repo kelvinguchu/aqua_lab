@@ -192,6 +192,10 @@ export function CertificatesTable({
                     <DropdownMenuContent align='end'>
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
+                        onClick={() => setSelectedCertificate(cert)}>
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={() =>
                           router.push(`/certificates/${cert.id}/edit`)
                         }>

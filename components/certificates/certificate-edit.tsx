@@ -1,7 +1,6 @@
 "use client";
 
 import type { Certificate } from "@/lib/supabase";
-import { createBrowserClient } from "@supabase/ssr";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -41,12 +40,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-// Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase/client";
 
 // Define FormValues type explicitly based on the form schema
 type FormValues = {
@@ -247,7 +241,7 @@ type ParameterCategory =
 // Add this type helper
 type TestParameterWithMeta = {
   id: string;
-  label: string;
+  name: string;
   type: "number" | "text";
   resultKey: keyof FormValues;
   remarkKey: keyof FormValues;
@@ -259,7 +253,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Physical Tests
   {
     id: "color",
-    label: "Color",
+    name: "Color",
     type: "text",
     resultKey: "color_result",
     remarkKey: "color_remark",
@@ -267,7 +261,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "conductivity",
-    label: "Conductivity",
+    name: "Conductivity",
     type: "number",
     resultKey: "conductivity_result",
     remarkKey: "conductivity_remark",
@@ -275,7 +269,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "ph",
-    label: "pH",
+    name: "pH",
     type: "number",
     resultKey: "ph_result",
     remarkKey: "ph_remark",
@@ -283,7 +277,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "tds",
-    label: "TDS",
+    name: "TDS",
     type: "number",
     resultKey: "tds_result",
     remarkKey: "tds_remark",
@@ -291,7 +285,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "tss",
-    label: "TSS",
+    name: "TSS",
     type: "number",
     resultKey: "tss_result",
     remarkKey: "tss_remark",
@@ -299,7 +293,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "turbidity",
-    label: "Turbidity",
+    name: "Turbidity",
     type: "number",
     resultKey: "turbidity_result",
     remarkKey: "turbidity_remark",
@@ -309,7 +303,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Chemical Tests (Anions)
   {
     id: "chloride",
-    label: "Chloride",
+    name: "Chloride",
     type: "number",
     resultKey: "chloride_result",
     remarkKey: "chloride_remark",
@@ -317,7 +311,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "fluoride",
-    label: "Fluoride",
+    name: "Fluoride",
     type: "number",
     resultKey: "fluoride_result",
     remarkKey: "fluoride_remark",
@@ -325,7 +319,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "nitrate",
-    label: "Nitrate",
+    name: "Nitrate",
     type: "number",
     resultKey: "nitrate_result",
     remarkKey: "nitrate_remark",
@@ -333,7 +327,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "nitrite",
-    label: "Nitrite",
+    name: "Nitrite",
     type: "number",
     resultKey: "nitrite_result",
     remarkKey: "nitrite_remark",
@@ -341,7 +335,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "sulfate",
-    label: "Sulfate",
+    name: "Sulfate",
     type: "number",
     resultKey: "sulfate_result",
     remarkKey: "sulfate_remark",
@@ -349,7 +343,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "free_chlorine",
-    label: "Free Chlorine",
+    name: "Free Chlorine",
     type: "number",
     resultKey: "free_chlorine_result",
     remarkKey: "free_chlorine_remark",
@@ -359,7 +353,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Chemical Tests (Cations)
   {
     id: "calcium",
-    label: "Calcium",
+    name: "Calcium",
     type: "number",
     resultKey: "calcium_result",
     remarkKey: "calcium_remark",
@@ -367,7 +361,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "magnesium",
-    label: "Magnesium",
+    name: "Magnesium",
     type: "number",
     resultKey: "magnesium_result",
     remarkKey: "magnesium_remark",
@@ -375,7 +369,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "potassium",
-    label: "Potassium",
+    name: "Potassium",
     type: "number",
     resultKey: "potassium_result",
     remarkKey: "potassium_remark",
@@ -383,7 +377,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "iron",
-    label: "Iron",
+    name: "Iron",
     type: "number",
     resultKey: "iron_result",
     remarkKey: "iron_remark",
@@ -391,7 +385,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "manganese",
-    label: "Manganese",
+    name: "Manganese",
     type: "number",
     resultKey: "manganese_result",
     remarkKey: "manganese_remark",
@@ -399,7 +393,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "copper",
-    label: "Copper",
+    name: "Copper",
     type: "number",
     resultKey: "copper_result",
     remarkKey: "copper_remark",
@@ -407,7 +401,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "zinc",
-    label: "Zinc",
+    name: "Zinc",
     type: "number",
     resultKey: "zinc_result",
     remarkKey: "zinc_remark",
@@ -415,7 +409,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "chromium",
-    label: "Chromium",
+    name: "Chromium",
     type: "number",
     resultKey: "chromium_result",
     remarkKey: "chromium_remark",
@@ -425,7 +419,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Other Parameters
   {
     id: "total_hardness",
-    label: "Total Hardness",
+    name: "Total Hardness",
     type: "number",
     resultKey: "total_hardness_result",
     remarkKey: "total_hardness_remark",
@@ -433,7 +427,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "calcium_hardness",
-    label: "Calcium Hardness",
+    name: "Calcium Hardness",
     type: "number",
     resultKey: "calcium_hardness_result",
     remarkKey: "calcium_hardness_remark",
@@ -441,7 +435,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "magnesium_hardness",
-    label: "Magnesium Hardness",
+    name: "Magnesium Hardness",
     type: "number",
     resultKey: "magnesium_hardness_result",
     remarkKey: "magnesium_hardness_remark",
@@ -449,7 +443,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "ph_alkalinity",
-    label: "pH Alkalinity",
+    name: "pH Alkalinity",
     type: "number",
     resultKey: "ph_alkalinity_result",
     remarkKey: "ph_alkalinity_remark",
@@ -457,7 +451,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "total_alkalinity",
-    label: "Total Alkalinity",
+    name: "Total Alkalinity",
     type: "number",
     resultKey: "total_alkalinity_result",
     remarkKey: "total_alkalinity_remark",
@@ -465,7 +459,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "silica",
-    label: "Silica",
+    name: "Silica",
     type: "number",
     resultKey: "silica_result",
     remarkKey: "silica_remark",
@@ -473,7 +467,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "phosphate",
-    label: "Phosphate",
+    name: "Phosphate",
     type: "number",
     resultKey: "phosphate_result",
     remarkKey: "phosphate_remark",
@@ -481,7 +475,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "sulfide",
-    label: "Sulfide",
+    name: "Sulfide",
     type: "number",
     resultKey: "sulfide_result",
     remarkKey: "sulfide_remark",
@@ -489,7 +483,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "ammonia",
-    label: "Ammonia",
+    name: "Ammonia",
     type: "number",
     resultKey: "ammonia_result",
     remarkKey: "ammonia_remark",
@@ -499,7 +493,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Microbiological Tests
   {
     id: "total_viable_counts",
-    label: "Total Viable Counts",
+    name: "Total Viable Counts",
     type: "text",
     resultKey: "total_viable_counts_result",
     remarkKey: "total_viable_counts_remark",
@@ -507,7 +501,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "coliforms_mpn",
-    label: "Coliforms MPN",
+    name: "Coliforms MPN",
     type: "text",
     resultKey: "coliforms_mpn_result",
     remarkKey: "coliforms_mpn_remark",
@@ -515,7 +509,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "ecoli_mpn",
-    label: "E. coli MPN",
+    name: "E. coli MPN",
     type: "text",
     resultKey: "ecoli_mpn_result",
     remarkKey: "ecoli_mpn_remark",
@@ -523,7 +517,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   },
   {
     id: "faecal_coliforms_mpn",
-    label: "Faecal Coliforms MPN",
+    name: "Faecal Coliforms MPN",
     type: "text",
     resultKey: "faecal_coliforms_mpn_result",
     remarkKey: "faecal_coliforms_mpn_remark",
@@ -1014,7 +1008,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Result
+                                  {param.name} Result
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1043,7 +1037,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Remark
+                                  {param.name} Remark
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1081,7 +1075,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Result
+                                  {param.name} Result
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1110,7 +1104,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Remark
+                                  {param.name} Remark
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1148,7 +1142,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Result
+                                  {param.name} Result
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1177,7 +1171,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Remark
+                                  {param.name} Remark
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1213,7 +1207,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Result
+                                  {param.name} Result
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1242,7 +1236,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className='text-sm font-medium'>
-                                  {param.label} Remark
+                                  {param.name} Remark
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -1281,7 +1275,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel className='text-sm font-medium'>
-                                    {param.label} Result
+                                    {param.name} Result
                                   </FormLabel>
                                   <FormControl>
                                     <Input
@@ -1301,7 +1295,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel className='text-sm font-medium'>
-                                    {param.label} Remark
+                                    {param.name} Remark
                                   </FormLabel>
                                   <FormControl>
                                     <Input
@@ -1358,7 +1352,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
             <Button
               type='button'
               variant='outline'
-              onClick={() => router.push("/certificates")}
+              onClick={() => router.push("/")}
               className='min-w-[100px] transition-colors hover:bg-accent'>
               Cancel
             </Button>

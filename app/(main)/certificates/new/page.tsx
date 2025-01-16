@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { CalendarIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import type { Certificate } from "@/lib/supabase";
-import { createBrowserClient } from "@supabase/ssr";
 import { useToast } from "@/hooks/use-toast";
 import {
   Breadcrumb,
@@ -56,12 +55,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-// Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase/client";
 
 // Create form schema
 const formSchema = z.object({
