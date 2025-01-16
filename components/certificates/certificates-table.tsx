@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { Plus, MoreHorizontal, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +27,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import type { Certificate } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CertificatesTableProps {
@@ -59,6 +68,47 @@ export function CertificatesTable({
   const { toast } = useToast();
   const [selectedCertificate, setSelectedCertificate] =
     useState<Certificate | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Filter certificates based on search query
+  const filteredCertificates = useMemo(() => {
+    return certificates.filter((cert) => {
+      const searchString = searchQuery.toLowerCase();
+      return (
+        cert.certificate_id?.toLowerCase().includes(searchString) ||
+        cert.sample_id?.toLowerCase().includes(searchString) ||
+        cert.sample_source?.toLowerCase().includes(searchString) ||
+        cert.submitted_by?.toLowerCase().includes(searchString)
+      );
+    });
+  }, [certificates, searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredCertificates.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCertificates = filteredCertificates.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - 2 && i <= currentPage + 2)
+      ) {
+        pages.push(i);
+      } else if (i === currentPage - 3 || i === currentPage + 3) {
+        pages.push("...");
+      }
+    }
+    return pages;
+  };
 
   const generatePDF = async (certificate: Certificate) => {
     try {
@@ -148,11 +198,16 @@ export function CertificatesTable({
     <>
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center text-muted-foreground'>
-            <span className='text-lg font-medium'>Total Certificates:</span>
-            <span className='ml-2 text-2xl font-bold text-foreground'>
-              {certificates.length}
-            </span>
+          <div className='flex items-center space-x-2 w-full max-w-sm'>
+            <Input
+              placeholder='Search certificates...'
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+              className='h-9'
+            />
           </div>
           <Button
             onClick={onNew}
@@ -162,6 +217,21 @@ export function CertificatesTable({
             New Certificate
           </Button>
         </div>
+
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center text-muted-foreground'>
+            <span className='text-lg font-medium'>Total Certificates:</span>
+            <span className='ml-2 text-2xl font-bold text-foreground'>
+              {filteredCertificates.length}
+            </span>
+          </div>
+          <div className='text-sm text-muted-foreground'>
+            Showing {startIndex + 1} to{" "}
+            {Math.min(startIndex + itemsPerPage, filteredCertificates.length)}{" "}
+            of {filteredCertificates.length} entries
+          </div>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -173,7 +243,7 @@ export function CertificatesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {certificates.map((cert) => (
+            {paginatedCertificates.map((cert) => (
               <TableRow key={cert.id}>
                 <TableCell>{cert.certificate_id}</TableCell>
                 <TableCell>{cert.sample_id}</TableCell>
@@ -211,6 +281,64 @@ export function CertificatesTable({
             ))}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href='#'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+
+              {getPageNumbers().map((page, index) => (
+                <PaginationItem key={index}>
+                  {page === "..." ? (
+                    <PaginationLink
+                      href='#'
+                      onClick={(e) => e.preventDefault()}>
+                      ...
+                    </PaginationLink>
+                  ) : (
+                    <PaginationLink
+                      href='#'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(Number(page));
+                      }}
+                      isActive={currentPage === page}>
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  href='#'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages)
+                      setCurrentPage(currentPage + 1);
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
       <Sheet

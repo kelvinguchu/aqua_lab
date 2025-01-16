@@ -85,7 +85,7 @@ export default function LoginPage() {
           <CardHeader className='space-y-6 items-center text-center'>
             <div className='w-64 h-32 relative mx-auto'>
               <Image
-                src='/logo.png'
+                src='https://res.cloudinary.com/dijdyn5c5/image/upload/v1736880813/logo_lljwcd.png'
                 alt='Aquatreat Solutions Ltd Logo'
                 width={256}
                 height={256}

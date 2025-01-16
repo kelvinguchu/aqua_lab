@@ -20,66 +20,67 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: "Times-Roman",
     backgroundColor: "#FAEEC5",
-    padding: 40,
+    padding: 15,
     position: "relative",
   },
   headerContainer: {
     flexDirection: "row",
-    marginBottom: 30,
+    marginBottom: 8,
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
   logoSection: {
-    width: "60%",
+    width: "50%",
   },
   logo: {
-    width: 300,
-    height: 120,
+    width: 150,
+    height: 60,
     objectFit: "contain",
   },
   companyInfo: {
-    width: "40%",
+    width: "50%",
     textAlign: "right",
   },
   companyAddress: {
-    fontSize: 9,
-    lineHeight: 1.4,
+    fontSize: 7,
+    lineHeight: 1.2,
     color: "#333",
   },
   title: {
     fontFamily: "Times-Roman",
     fontWeight: "heavy",
-    fontSize: 18,
+    fontSize: 13,
     color: "#1E88E5",
-    marginBottom: 20,
+    marginBottom: 6,
     textAlign: "center",
     textTransform: "uppercase",
   },
   infoSection: {
     flexDirection: "row",
-    marginBottom: 30,
-    gap: 20,
+    marginBottom: 15,
+    gap: 10,
     borderBottom: "1pt solid #000",
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   infoColumn: {
     flex: 1,
+    paddingRight: 5,
   },
   infoRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 2,
   },
   infoLabel: {
-    width: 140,
-    fontSize: 10,
+    width: 90,
+    fontSize: 7,
     fontWeight: "bold",
   },
   infoValue: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 7,
   },
   table: {
-    marginTop: 20,
+    marginTop: 4,
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#000",
@@ -88,26 +89,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
-    minHeight: 18,
+    minHeight: 14,
   },
   categoryHeader: {
-    padding: 10,
-    fontSize: 12,
+    padding: 5,
+    fontSize: 11,
     fontWeight: "heavy",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
   },
   tableHeaderCell: {
     fontWeight: "heavy",
-    padding: "2px 8px",
-    fontSize: 10,
+    padding: "0px 2px",
+    fontSize: 8,
     borderRightWidth: 1,
     borderRightColor: "#000",
     textAlign: "center",
   },
   tableCell: {
-    padding: "2px 8px",
-    fontSize: 10,
+    padding: "0px 2px",
+    fontSize: 8,
     borderRightWidth: 1,
     borderRightColor: "#000",
     textAlign: "left",
@@ -119,151 +120,65 @@ const styles = StyleSheet.create({
   col5: { width: "17%" },
   col6: { width: "15%" },
   footer: {
-    marginTop: 5,
+    marginTop: 2,
+    borderTop: "1pt solid #000",
+    paddingTop: 2,
+  },
+  disclaimer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
   },
   footerText: {
-    fontSize: 8,
-    marginBottom: 5,
+    fontSize: 7,
     fontStyle: "italic",
+    width: "100%",
   },
   signatureSection: {
     flexDirection: "row",
-    marginTop: 15,
+    marginTop: 4,
     justifyContent: "space-between",
-    borderTop: "1pt solid #000",
-    paddingTop: 20,
+    paddingTop: 2,
   },
-  signature: {
+  signatureBlock: {
     width: "45%",
-  },
-  signatureTitle: {
-    fontSize: 10,
-    fontWeight: "bold",
-    marginTop: 10,
-  },
-  signatureContact: {
-    fontSize: 8,
-    marginTop: 2,
-  },
-  legend: {
-    fontSize: 9,
-    marginBottom: 5,
-    fontWeight: "bold",
-  },
-  tableCellData: {
-    padding: 8,
-    fontSize: 9,
-    textAlign: "left",
-  },
-  categoryHeaderWrapper: {
-    width: "100%",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
   },
   signatureLine: {
     borderTopWidth: 1,
     borderTopColor: "#000",
-    width: "100%",
-    marginBottom: 8,
+    width: "40%",
   },
-  legendSection: {
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  resultsSection: {
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  infoValueWrap: {
-    flex: 1,
-    fontSize: 10,
-    flexWrap: "wrap",
-  },
-  tableWrapper: {
-    marginTop: 20,
-    marginBottom: 200,
-  },
-  parameterCell: {
-    width: "22%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-  },
-  methodCell: {
-    width: "28%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-  },
-  unitCell: {
-    width: "10%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-    textAlign: "center",
-  },
-  resultCell: {
-    width: "10%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-    textAlign: "center",
-  },
-  standardCell: {
-    width: "20%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-  },
-  remarkCell: {
-    width: "10%",
-    borderRightWidth: 1,
-    borderRightColor: "#000",
-    textAlign: "center",
-  },
-  boldText: {
-    fontWeight: "bold",
-  },
-  centerText: {
-    textAlign: "center",
-  },
-  italicText: {
-    fontStyle: "italic",
-  },
-  companyDetails: {
-    marginTop: 10,
-    fontSize: 8,
-  },
-  disclaimer: {
-    fontSize: 8,
-    fontStyle: "italic",
-    marginTop: 10,
-  },
-  titleWrapper: {
-    marginTop: 20,
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  dateSection: {
-    flexDirection: "row",
-    gap: 40,
-    marginBottom: 20,
-  },
-  signatureBlock: {
-    width: "45%",
-    marginTop: 20,
+  signatureInfo: {
+    width: "60%",
   },
   signatureName: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "bold",
-    marginTop: 5,
   },
   signatureRole: {
-    fontSize: 9,
-    marginTop: 2,
-  },
-  signatureDate: {
-    fontSize: 8,
-    marginTop: 5,
-    fontStyle: "italic",
+    fontSize: 7,
+    color: "#444",
   },
   pageNumber: {
-    fontSize: 8,
-    marginTop: 10,
-    textAlign: "right",
+    position: "absolute",
+    fontSize: 7,
+    bottom: 4,
+    right: 4,
+  },
+  legendSection: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 2,
+    marginBottom: 2,
+    paddingLeft: 2,
+  },
+  legend: {
+    fontSize: 7,
+    color: "#444",
   },
   mainContent: {
     minHeight: "100%",
@@ -275,6 +190,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#000",
     padding: 10,
+  },
+  centerText: {
+    textAlign: "center",
+  },
+  dateSection: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 0,
+    marginBottom: 2,
+    paddingBottom: 2,
+    borderBottom: "1pt solid #000",
+  },
+  dateGroup: {
+    flexDirection: "row",
+    width: "25%",
+    paddingRight: 4,
+    paddingBottom: 1,
+  },
+  dateLabel: {
+    fontSize: 7.5,
+    width: "35%",
+    color: "#444",
+  },
+  dateValue: {
+    fontSize: 7.5,
+    width: "65%",
+    fontWeight: "bold",
   },
 });
 
@@ -293,14 +235,12 @@ const Header = () => (
       </View>
       <View style={styles.companyInfo}>
         <Text style={styles.companyAddress}>
-          Along Eastern Bypass, Utawala Junction{"\n"}
-          Opp Tumaini Supermarket,{"\n"}
-          Golden court plot no. 31/32{"\n"}
+          Along Eastern Bypass, Utawala Junction,{"\n"}
+          Opp Tumaini Supermarket, Golden court plot no. 31/32{"\n"}
           P.O.BOX 26559 – 00100{"\n"}
           Tel: +254 20 2317314/ +254724083450{"\n"}
           +254 720559614, +254 722202189{"\n"}
-          Email: info@aquatreat.co.ke{"\n"}
-          Website: www.aquatreat.co.ke
+          Email: info@aquatreat.co.ke | www.aquatreat.co.ke
         </Text>
       </View>
     </View>
@@ -332,76 +272,32 @@ const TableHeader = () => (
 );
 
 export function CertificatePDF({ certificate }: CertificatePDFProps) {
+  const dateInfo = [
+    { label: "Date:", value: certificate.date_of_report },
+    { label: "Sample ID:", value: certificate.sample_id },
+    { label: "Certificate:", value: certificate.certificate_id },
+    { label: "Source:", value: certificate.sample_source },
+    { label: "Sampled:", value: certificate.date_of_sampling },
+    { label: "Received:", value: certificate.date_sample_received },
+    { label: "Analysis:", value: certificate.date_of_analysis },
+    { label: "Report:", value: certificate.date_of_report_issue },
+    { label: "Description:", value: certificate.description_of_sample },
+    { label: "Submitted:", value: certificate.submitted_by },
+    { label: "Contact:", value: certificate.customer_contact },
+    { label: "Sampled By:", value: certificate.sampled_by },
+  ];
+
   return (
     <Document>
       <Page size='A4' style={styles.page} wrap>
         <Header />
         <View style={styles.dateSection}>
-          <View style={styles.infoColumn}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date:</Text>
-              <Text style={styles.infoValue}>{certificate.date_of_report}</Text>
+          {dateInfo.map(({ label, value }, index) => (
+            <View key={index} style={styles.dateGroup}>
+              <Text style={styles.dateLabel}>{label}</Text>
+              <Text style={styles.dateValue}>{value}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Description of Sample:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.description_of_sample}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Sample Source:</Text>
-              <Text style={styles.infoValue}>{certificate.sample_source}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Submitted By:</Text>
-              <Text style={styles.infoValue}>{certificate.submitted_by}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Customer Contact:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.customer_contact}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Sampled By:</Text>
-              <Text style={styles.infoValue}>{certificate.sampled_by}</Text>
-            </View>
-          </View>
-
-          <View style={styles.infoColumn}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date of Sampling:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.date_of_sampling}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date Sample Received:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.date_sample_received}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date of Analysis:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.date_of_analysis}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Certificate ID:</Text>
-              <Text style={styles.infoValue}>{certificate.certificate_id}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Sample ID:</Text>
-              <Text style={styles.infoValue}>{certificate.sample_id}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date of Report Issue:</Text>
-              <Text style={styles.infoValue}>
-                {certificate.date_of_report_issue}
-              </Text>
-            </View>
-          </View>
+          ))}
         </View>
 
         <View style={styles.table}>
@@ -648,38 +544,37 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
           <View style={styles.disclaimer}>
             <Text style={styles.footerText}>
               This test report shall not be reproduced in full or part except
-              with written approval from Aquatreat Solutions Limited.
-            </Text>
-            <Text style={styles.footerText}>
-              The results relate to the sample(s) submitted. The laboratory will
-              not be held responsible for any sampling errors.
-            </Text>
-            <Text style={styles.footerText}>
-              The results above are within the recommended standard values for
-              potable water.
+              with written approval from Aquatreat Solutions Limited. The
+              results relate to the sample(s) submitted. The laboratory will not
+              be held responsible for any sampling errors. The results above are
+              within the recommended standard values for potable water.
             </Text>
           </View>
 
           <View style={styles.signatureSection}>
             <View style={styles.signatureBlock}>
               <View style={styles.signatureLine} />
-              <Text style={styles.signatureName}>DENIS KIPKIRUI</Text>
-              <Text style={styles.signatureRole}>WATER QUALITY LAB</Text>
+              <View style={styles.signatureInfo}>
+                <Text style={styles.signatureName}>DENIS KIPKIRUI</Text>
+                <Text style={styles.signatureRole}>WATER QUALITY LAB</Text>
+              </View>
             </View>
 
             <View style={styles.signatureBlock}>
               <View style={styles.signatureLine} />
-              <Text style={styles.signatureName}>ISAAC NJENGA</Text>
-              <Text style={styles.signatureRole}>QUALITY CONTROL MANAGER</Text>
+              <View style={styles.signatureInfo}>
+                <Text style={styles.signatureName}>ISAAC NJENGA</Text>
+                <Text style={styles.signatureRole}>
+                  QUALITY CONTROL MANAGER
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
         <Text
           style={styles.pageNumber}
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
+          render={({ pageNumber }) => `Page ${pageNumber}`}
           fixed
         />
       </Page>

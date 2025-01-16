@@ -9,7 +9,6 @@ const nextConfig = {
     return config;
   },
 
-  // Server actions configuration for Next.js 15
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", "aqua-lab.vercel.app"],
@@ -18,9 +17,15 @@ const nextConfig = {
     typedRoutes: true,
   },
 
-  // Configure image domains for Supabase
   images: {
-    domains: ["otbekbrcmbppdictcrkr.supabase.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
   },
 };
 
