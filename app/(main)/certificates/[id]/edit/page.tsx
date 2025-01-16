@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, use } from "react";
 import { CertificateEdit } from "@/components/certificates/certificate-edit";
+import { supabase } from "@/lib/supabase/client";
 import type { Certificate } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -16,18 +17,20 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { supabase } from "@/lib/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-export default function EditCertificatePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+interface EditPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function EditPage({ params }: EditPageProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const resolvedParams = use(params);
 
   useEffect(() => {
     const fetchCertificate = async () => {
@@ -35,7 +38,7 @@ export default function EditCertificatePage({
         const { data, error } = await supabase
           .from("certificates")
           .select("*")
-          .eq("id", resolvedParams.id)
+          .eq("id", params.id)
           .single();
 
         if (error) throw error;
@@ -47,13 +50,18 @@ export default function EditCertificatePage({
         setError(
           err instanceof Error ? err.message : "Failed to fetch certificate"
         );
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch certificate details",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchCertificate();
-  }, [resolvedParams.id]);
+  }, [params.id, toast]);
 
   if (loading) {
     return (

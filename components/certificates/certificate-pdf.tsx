@@ -20,12 +20,12 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: "Times-Roman",
     backgroundColor: "#FAEEC5",
-    padding: 15,
+    padding: 14,
     position: "relative",
   },
   headerContainer: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 4,
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
@@ -42,45 +42,45 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   companyAddress: {
-    fontSize: 7,
-    lineHeight: 1.2,
+    fontSize: 8,
+    lineHeight: 1.15,
     color: "#333",
   },
   title: {
     fontFamily: "Times-Roman",
     fontWeight: "heavy",
-    fontSize: 13,
+    fontSize: 12.5,
     color: "#1E88E5",
-    marginBottom: 6,
+    marginBottom: 3,
     textAlign: "center",
     textTransform: "uppercase",
   },
-  infoSection: {
+  dateSection: {
     flexDirection: "row",
-    marginBottom: 15,
-    gap: 10,
-    borderBottom: "1pt solid #000",
-    paddingBottom: 10,
-  },
-  infoColumn: {
-    flex: 1,
-    paddingRight: 5,
-  },
-  infoRow: {
-    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 0,
     marginBottom: 2,
+    paddingBottom: 1,
+    borderBottom: "1pt solid #000",
   },
-  infoLabel: {
-    width: 90,
-    fontSize: 7,
+  dateGroup: {
+    flexDirection: "row",
+    width: "33.33%",
+    paddingRight: 2,
+    paddingBottom: 1,
+  },
+  dateLabel: {
+    fontSize: 8,
+    width: "40%",
+    color: "#444",
+  },
+  dateValue: {
+    fontSize: 8,
+    width: "60%",
     fontWeight: "bold",
   },
-  infoValue: {
-    flex: 1,
-    fontSize: 7,
-  },
   table: {
-    marginTop: 4,
+    marginTop: 2,
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#000",
@@ -89,56 +89,51 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
-    minHeight: 14,
+    minHeight: 12,
   },
   categoryHeader: {
-    padding: 5,
-    fontSize: 11,
+    padding: 2,
+    fontSize: 9,
     fontWeight: "heavy",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
   },
   tableHeaderCell: {
     fontWeight: "heavy",
-    padding: "0px 2px",
+    padding: "1px 2px",
     fontSize: 8,
     borderRightWidth: 1,
     borderRightColor: "#000",
     textAlign: "center",
   },
   tableCell: {
-    padding: "0px 2px",
+    padding: "1px 2px",
     fontSize: 8,
     borderRightWidth: 1,
     borderRightColor: "#000",
     textAlign: "left",
   },
-  col1: { width: "18%" },
-  col2: { width: "22%" },
-  col3: { width: "14%" },
-  col4: { width: "14%" },
-  col5: { width: "17%" },
-  col6: { width: "15%" },
+  col1: { width: "20%" },
+  col2: { width: "25%" },
+  col3: { width: "15%" },
+  col4: { width: "15%" },
+  col5: { width: "15%" },
+  col6: { width: "10%" },
   footer: {
     marginTop: 2,
     borderTop: "1pt solid #000",
-    paddingTop: 2,
-  },
-  disclaimer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
+    paddingTop: 1,
   },
   footerText: {
-    fontSize: 7,
+    fontSize: 6.5,
     fontStyle: "italic",
-    width: "100%",
+    marginBottom: 2,
   },
   signatureSection: {
     flexDirection: "row",
-    marginTop: 4,
     justifyContent: "space-between",
-    paddingTop: 2,
+    marginTop: 4,
+    paddingTop: 1,
   },
   signatureBlock: {
     width: "45%",
@@ -162,61 +157,55 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: "#444",
   },
-  pageNumber: {
-    position: "absolute",
-    fontSize: 7,
-    bottom: 4,
-    right: 4,
-  },
   legendSection: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 6,
     marginTop: 2,
     marginBottom: 2,
-    paddingLeft: 2,
   },
   legend: {
-    fontSize: 7,
+    fontSize: 6.5,
     color: "#444",
   },
-  mainContent: {
-    minHeight: "100%",
-    paddingBottom: 200,
-  },
-  microbiologicalTitle: {
-    fontSize: 12,
-    fontWeight: "heavy",
-    borderBottomWidth: 1,
-    borderBottomColor: "#000",
-    padding: 10,
+  pageNumber: {
+    position: "absolute",
+    fontSize: 7,
+    bottom: 3,
+    right: 3,
   },
   centerText: {
     textAlign: "center",
   },
-  dateSection: {
+  disclaimer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 0,
-    marginBottom: 2,
-    paddingBottom: 2,
+    gap: 4,
+  },
+  microbiologicalTitle: {
+    fontSize: 10,
+    fontWeight: "heavy",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    padding: 3,
+  },
+  commentsSection: {
+    marginTop: 3,
+    marginBottom: 3,
+    padding: 3,
+    borderTop: "1pt solid #000",
     borderBottom: "1pt solid #000",
   },
-  dateGroup: {
-    flexDirection: "row",
-    width: "25%",
-    paddingRight: 4,
-    paddingBottom: 1,
-  },
-  dateLabel: {
-    fontSize: 7.5,
-    width: "35%",
-    color: "#444",
-  },
-  dateValue: {
-    fontSize: 7.5,
-    width: "65%",
+  commentsLabel: {
+    fontSize: 8,
     fontWeight: "bold",
+    marginBottom: 1,
+  },
+  commentsText: {
+    fontSize: 8,
+    color: "#333",
+    fontStyle: "italic",
+    lineHeight: 1.2,
   },
 });
 
@@ -277,12 +266,12 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
     { label: "Sample ID:", value: certificate.sample_id },
     { label: "Certificate:", value: certificate.certificate_id },
     { label: "Source:", value: certificate.sample_source },
-    { label: "Sampled:", value: certificate.date_of_sampling },
-    { label: "Received:", value: certificate.date_sample_received },
-    { label: "Analysis:", value: certificate.date_of_analysis },
-    { label: "Report:", value: certificate.date_of_report_issue },
+    { label: "Date Sampled:", value: certificate.date_of_sampling },
+    { label: "Date Received:", value: certificate.date_sample_received },
+    { label: "Date Analyzed:", value: certificate.date_of_analysis },
+    { label: "Date Reported:", value: certificate.date_of_report_issue },
     { label: "Description:", value: certificate.description_of_sample },
-    { label: "Submitted:", value: certificate.submitted_by },
+    { label: "Submitted By:", value: certificate.submitted_by },
     { label: "Contact:", value: certificate.customer_contact },
     { label: "Sampled By:", value: certificate.sampled_by },
   ];
@@ -530,6 +519,13 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
           </View>
         </View>
 
+        {certificate.comments && (
+          <View style={styles.commentsSection}>
+            <Text style={styles.commentsLabel}>Comments:</Text>
+            <Text style={styles.commentsText}>{certificate.comments}</Text>
+          </View>
+        )}
+
         {/* Legend Section */}
         <View style={styles.legendSection}>
           <Text style={styles.legend}>NS: Not Set Standard</Text>
@@ -555,7 +551,7 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
             <View style={styles.signatureBlock}>
               <View style={styles.signatureLine} />
               <View style={styles.signatureInfo}>
-                <Text style={styles.signatureName}>DENIS KIPKIRUI</Text>
+                <Text style={styles.signatureName}>PURITY MATHENGE</Text>
                 <Text style={styles.signatureRole}>WATER QUALITY LAB</Text>
               </View>
             </View>
