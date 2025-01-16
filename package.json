@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm install --legacy-peer-deps && next build",
+    "build": "npm install --legacy-peer-deps && npm install postcss autoprefixer tailwindcss && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -61,14 +61,15 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.5",
     "vaul": "^1.1.2",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8",
+    "autoprefixer": "^10.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/react-dom": "^19"
   }
 }
