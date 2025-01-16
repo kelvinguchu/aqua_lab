@@ -4,14 +4,17 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@": ".",
+      "@": __dirname,
     };
     return config;
   },
 
   // Server actions configuration for Next.js 15
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ["localhost:3000", "aqua-lab.vercel.app"],
+      bodySizeLimit: "2mb",
+    },
     typedRoutes: true,
   },
 
