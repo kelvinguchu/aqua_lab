@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm install --legacy-peer-deps && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -50,9 +50,9 @@
     "lucide-react": "^0.471.1",
     "next": "15.1.4",
     "next-themes": "^0.4.4",
-    "react": "^19.0.0",
+    "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^19.0.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.54.2",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.0",
