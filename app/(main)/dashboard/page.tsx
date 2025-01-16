@@ -13,7 +13,7 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Fetch function for certificates
-const fetchCertificates = async () => {
+const fetchCertificates = async (): Promise<Certificate[]> => {
   const { data, error } = await supabase
     .from("certificates")
     .select("*")
@@ -26,18 +26,18 @@ const fetchCertificates = async () => {
 export default function Dashboard() {
   const router = useRouter();
 
-  // Use React Query for caching and automatic revalidation
+  // React Query for caching and automatic revalidation
   const {
     data: certificates = [],
     isLoading,
     isError,
     error,
     refetch,
-  } = useQuery<Certificate[], Error>({
+  } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
     queryFn: fetchCertificates,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    staleTime: 1000 * 60 * 5, // Data fresh for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnReconnect: true, // Refetch when internet reconnects
     retry: 3, // Retry failed requests 3 times
