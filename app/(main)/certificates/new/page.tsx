@@ -57,7 +57,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/lib/supabase/client";
 
-// Create form schema
+// Form schema
 const formSchema = z.object({
   // Header Information
   certificate_id: z.string(),
