@@ -14,12 +14,16 @@ import {
   TEST_PARAMETERS,
   getParametersByCategory,
   checkStandard,
+  TestParameter,
 } from "@/lib/utils";
+
+type CertificatePDFProps = {
+  certificate: Certificate;
+};
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Times-Roman",
-    backgroundColor: "#FAEEC5",
     padding: 14,
     position: "relative",
   },
@@ -209,10 +213,6 @@ const styles = StyleSheet.create({
   },
 });
 
-type CertificatePDFProps = {
-  certificate: Certificate;
-};
-
 const Header = () => (
   <>
     <View style={styles.headerContainer}>
@@ -260,6 +260,26 @@ const TableHeader = () => (
   </View>
 );
 
+const isParameterEmpty = (certificate: Certificate, param: TestParameter) => {
+  const result = certificate[param.resultKey];
+  return (
+    result === null ||
+    result === undefined ||
+    result === "" ||
+    result === "ND" ||
+    result === "NaN" ||
+    result === "NaN" ||
+    String(result).toLowerCase() === "nan"
+  );
+};
+
+const filterNonEmptyParameters = (
+  parameters: TestParameter[],
+  certificate: Certificate
+) => {
+  return parameters.filter((param) => !isParameterEmpty(certificate, param));
+};
+
 export function CertificatePDF({ certificate }: CertificatePDFProps) {
   const dateInfo = [
     { label: "Date:", value: certificate.date_of_report },
@@ -276,12 +296,17 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
     { label: "Sampled By:", value: certificate.sampled_by },
   ];
 
+  // Filter out empty date info
+  const filteredDateInfo = dateInfo.filter(
+    ({ value }) => value !== null && value !== undefined && value !== ""
+  );
+
   return (
     <Document>
       <Page size='A4' style={styles.page} wrap>
         <Header />
         <View style={styles.dateSection}>
-          {dateInfo.map(({ label, value }, index) => (
+          {filteredDateInfo.map(({ label, value }, index) => (
             <View key={index} style={styles.dateGroup}>
               <Text style={styles.dateLabel}>{label}</Text>
               <Text style={styles.dateValue}>{value}</Text>
@@ -291,232 +316,326 @@ export function CertificatePDF({ certificate }: CertificatePDFProps) {
 
         <View style={styles.table}>
           <TableHeader />
+
           {/* Physical Tests */}
-          <View style={styles.categoryHeader} wrap={false}>
-            <Text>PHYSICAL TESTS</Text>
-          </View>
-          {getParametersByCategory("physical").map((param) => (
-            <View style={styles.tableRow} key={param.name} wrap={false}>
-              <View style={[styles.tableCell, styles.col1]}>
-                <Text>{param.name}</Text>
+          {filterNonEmptyParameters(
+            getParametersByCategory("physical"),
+            certificate
+          ).length > 0 && (
+            <>
+              <View style={styles.categoryHeader} wrap={false}>
+                <Text>PHYSICAL TESTS</Text>
               </View>
-              <View style={[styles.tableCell, styles.col2]}>
-                <Text>{param.method}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col3]}>
-                <Text>{param.unit}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col4]}>
-                <Text>{certificate[param.resultKey] ?? "ND"}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col5]}>
-                <Text>{param.standard}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col6]}>
-                <Text>
-                  {certificate[param.remarkKey] ??
-                    checkStandard(param, certificate[param.resultKey])}
-                </Text>
-              </View>
-            </View>
-          ))}
+              {filterNonEmptyParameters(
+                getParametersByCategory("physical"),
+                certificate
+              ).map((param) => (
+                <View style={styles.tableRow} key={param.name} wrap={false}>
+                  <View style={[styles.tableCell, styles.col1]}>
+                    <Text>{param.name}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col2]}>
+                    <Text>{param.method}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col3]}>
+                    <Text>{param.unit}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col4]}>
+                    <Text>{certificate[param.resultKey]}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col5]}>
+                    <Text>{param.standard}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col6]}>
+                    <Text>
+                      {certificate[param.remarkKey] ??
+                        checkStandard(param, certificate[param.resultKey])}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
 
           {/* Chemical Tests (Anions) */}
-          <View style={styles.categoryHeader} wrap={false}>
-            <Text>CHEMICAL TESTS (ANIONS)</Text>
-          </View>
-          {getParametersByCategory("anions").map((param) => (
-            <View style={styles.tableRow} key={param.name} wrap={false}>
-              <View style={[styles.tableCell, styles.col1]}>
-                <Text>{param.name}</Text>
+          {filterNonEmptyParameters(
+            getParametersByCategory("anions"),
+            certificate
+          ).length > 0 && (
+            <>
+              <View style={styles.categoryHeader} wrap={false}>
+                <Text>CHEMICAL TESTS (ANIONS)</Text>
               </View>
-              <View style={[styles.tableCell, styles.col2]}>
-                <Text>{param.method}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col3]}>
-                <Text>{param.unit}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col4]}>
-                <Text>{certificate[param.resultKey] ?? "ND"}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col5]}>
-                <Text>{param.standard}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col6]}>
-                <Text>
-                  {certificate[param.remarkKey] ??
-                    checkStandard(param, certificate[param.resultKey])}
-                </Text>
-              </View>
-            </View>
-          ))}
+              {filterNonEmptyParameters(
+                getParametersByCategory("anions"),
+                certificate
+              ).map((param) => (
+                <View style={styles.tableRow} key={param.name} wrap={false}>
+                  <View style={[styles.tableCell, styles.col1]}>
+                    <Text>{param.name}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col2]}>
+                    <Text>{param.method}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col3]}>
+                    <Text>{param.unit}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col4]}>
+                    <Text>{certificate[param.resultKey]}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col5]}>
+                    <Text>{param.standard}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col6]}>
+                    <Text>
+                      {certificate[param.remarkKey] ??
+                        checkStandard(param, certificate[param.resultKey])}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
 
           {/* Chemical Tests (Cations) */}
-          <View style={styles.categoryHeader} wrap={false}>
-            <Text>CHEMICAL TESTS (CATIONS)</Text>
-          </View>
-          {getParametersByCategory("cations").map((param) => (
-            <View style={styles.tableRow} key={param.name} wrap={false}>
-              <View style={[styles.tableCell, styles.col1]}>
-                <Text>{param.name}</Text>
+          {filterNonEmptyParameters(
+            getParametersByCategory("cations"),
+            certificate
+          ).length > 0 && (
+            <>
+              <View style={styles.categoryHeader} wrap={false}>
+                <Text>CHEMICAL TESTS (CATIONS)</Text>
               </View>
-              <View style={[styles.tableCell, styles.col2]}>
-                <Text>{param.method}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col3]}>
-                <Text>{param.unit}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col4]}>
-                <Text>{certificate[param.resultKey] ?? "ND"}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col5]}>
-                <Text>{param.standard}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col6]}>
-                <Text>
-                  {certificate[param.remarkKey] ??
-                    checkStandard(param, certificate[param.resultKey])}
-                </Text>
-              </View>
-            </View>
-          ))}
+              {filterNonEmptyParameters(
+                getParametersByCategory("cations"),
+                certificate
+              ).map((param) => (
+                <View style={styles.tableRow} key={param.name} wrap={false}>
+                  <View style={[styles.tableCell, styles.col1]}>
+                    <Text>{param.name}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col2]}>
+                    <Text>{param.method}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col3]}>
+                    <Text>{param.unit}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col4]}>
+                    <Text>{certificate[param.resultKey]}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col5]}>
+                    <Text>{param.standard}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col6]}>
+                    <Text>
+                      {certificate[param.remarkKey] ??
+                        checkStandard(param, certificate[param.resultKey])}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
 
           {/* Other Parameters */}
-          <View style={styles.categoryHeader} wrap={false}>
-            <Text>OTHER PARAMETERS</Text>
-          </View>
-          {getParametersByCategory("other").map((param) => (
-            <View style={styles.tableRow} key={param.name} wrap={false}>
-              <View style={[styles.tableCell, styles.col1]}>
-                <Text>{param.name}</Text>
+          {filterNonEmptyParameters(
+            getParametersByCategory("other"),
+            certificate
+          ).length > 0 && (
+            <>
+              <View style={styles.categoryHeader} wrap={false}>
+                <Text>OTHER PARAMETERS</Text>
               </View>
-              <View style={[styles.tableCell, styles.col2]}>
-                <Text>{param.method}</Text>
+              {filterNonEmptyParameters(
+                getParametersByCategory("other"),
+                certificate
+              ).map((param) => (
+                <View style={styles.tableRow} key={param.name} wrap={false}>
+                  <View style={[styles.tableCell, styles.col1]}>
+                    <Text>{param.name}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col2]}>
+                    <Text>{param.method}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col3]}>
+                    <Text>{param.unit}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col4]}>
+                    <Text>{certificate[param.resultKey]}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col5]}>
+                    <Text>{param.standard}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.col6]}>
+                    <Text>
+                      {certificate[param.remarkKey] ??
+                        checkStandard(param, certificate[param.resultKey])}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Microbiological Tests - only show if any micro test has a value */}
+          {((certificate.total_viable_counts_result &&
+            certificate.total_viable_counts_result !== "ND") ||
+            (certificate.coliforms_mpn_result &&
+              certificate.coliforms_mpn_result !== "ND") ||
+            (certificate.ecoli_mpn_result &&
+              certificate.ecoli_mpn_result !== "ND") ||
+            (certificate.faecal_coliforms_mpn_result &&
+              certificate.faecal_coliforms_mpn_result !== "ND")) && (
+            <>
+              <View style={[styles.categoryHeader]} wrap={false}>
+                <Text>MICROBIOLOGICAL TESTS</Text>
               </View>
-              <View style={[styles.tableCell, styles.col3]}>
-                <Text>{param.unit}</Text>
+
+              <View style={styles.tableRow} wrap={false}>
+                <View style={[styles.tableHeaderCell, { width: "35%" }]}>
+                  <Text>TEST</Text>
+                </View>
+                <View style={[styles.tableHeaderCell, { width: "20%" }]}>
+                  <Text>METHOD</Text>
+                </View>
+                <View style={[styles.tableHeaderCell, { width: "20%" }]}>
+                  <Text>KS EAS 12:2018</Text>
+                </View>
+                <View style={[styles.tableHeaderCell, { width: "12.5%" }]}>
+                  <Text>RESULTS</Text>
+                </View>
+                <View style={[styles.tableHeaderCell, { width: "12.5%" }]}>
+                  <Text>REMARKS</Text>
+                </View>
               </View>
-              <View style={[styles.tableCell, styles.col4]}>
-                <Text>{certificate[param.resultKey] ?? "ND"}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col5]}>
-                <Text>{param.standard}</Text>
-              </View>
-              <View style={[styles.tableCell, styles.col6]}>
-                <Text>
-                  {certificate[param.remarkKey] ??
-                    checkStandard(param, certificate[param.resultKey])}
-                </Text>
-              </View>
-            </View>
-          ))}
 
-          {/* Microbiological Tests */}
-          <View style={[styles.categoryHeader]} wrap={false}>
-            <Text>MICROBIOLOGICAL TESTS</Text>
-          </View>
+              {certificate.total_viable_counts_result &&
+                certificate.total_viable_counts_result !== "ND" && (
+                  <View style={styles.tableRow} wrap={false}>
+                    <View style={[styles.tableCell, { width: "35%" }]}>
+                      <Text>Total Viable Counts at 37°C CFU/ml Max</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>ISO Method 6222:99</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>50 Max</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.total_viable_counts_result}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.total_viable_counts_remark}</Text>
+                    </View>
+                  </View>
+                )}
 
-          <View style={styles.tableRow} wrap={false}>
-            <View style={[styles.tableHeaderCell, { width: "35%" }]}>
-              <Text>TEST</Text>
-            </View>
-            <View style={[styles.tableHeaderCell, { width: "20%" }]}>
-              <Text>METHOD</Text>
-            </View>
-            <View style={[styles.tableHeaderCell, { width: "20%" }]}>
-              <Text>KS EAS 12:2018</Text>
-            </View>
-            <View style={[styles.tableHeaderCell, { width: "12.5%" }]}>
-              <Text>RESULTS</Text>
-            </View>
-            <View style={[styles.tableHeaderCell, { width: "12.5%" }]}>
-              <Text>REMARKS</Text>
-            </View>
-          </View>
+              {certificate.coliforms_mpn_result &&
+                certificate.coliforms_mpn_result !== "ND" && (
+                  <View style={styles.tableRow} wrap={false}>
+                    <View style={[styles.tableCell, { width: "35%" }]}>
+                      <Text>MPN of Coliforms Organisms in a 100 ml sample</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>ASL/TM/HACH/8001</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>Shall be absent</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.coliforms_mpn_result}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.coliforms_mpn_remark}</Text>
+                    </View>
+                  </View>
+                )}
 
-          {/* Total Viable Counts */}
-          <View style={styles.tableRow} wrap={false}>
-            <View style={[styles.tableCell, { width: "35%" }]}>
-              <Text>Total Viable Counts at 37°C CFU/ml Max</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>ISO Method 6222:99</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>50 Max</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.total_viable_counts_result}</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.total_viable_counts_remark}</Text>
-            </View>
-          </View>
+              {certificate.ecoli_mpn_result &&
+                certificate.ecoli_mpn_result !== "ND" && (
+                  <View style={styles.tableRow} wrap={false}>
+                    <View style={[styles.tableCell, { width: "35%" }]}>
+                      <Text>MPN of E-Coli Organisms in a 100 ml sample</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>ASL/TM/HACH/8001</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>Shall be absent</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.ecoli_mpn_result}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.ecoli_mpn_remark}</Text>
+                    </View>
+                  </View>
+                )}
 
-          {/* Coliforms */}
-          <View style={styles.tableRow} wrap={false}>
-            <View style={[styles.tableCell, { width: "35%" }]}>
-              <Text>MPN of Coliforms Organisms in a 100 ml sample</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>ASL/TM/HACH/8001</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>Shall be absent</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.coliforms_mpn_result}</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.coliforms_mpn_remark}</Text>
-            </View>
-          </View>
-
-          {/* E-Coli */}
-          <View style={styles.tableRow} wrap={false}>
-            <View style={[styles.tableCell, { width: "35%" }]}>
-              <Text>MPN of E-Coli Organisms in a 100 ml sample</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>ASL/TM/HACH/8001</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>Shall be absent</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.ecoli_mpn_result}</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.ecoli_mpn_remark}</Text>
-            </View>
-          </View>
-
-          {/* Faecal Coliforms */}
-          <View style={styles.tableRow} wrap={false}>
-            <View style={[styles.tableCell, { width: "35%" }]}>
-              <Text>MPN of Faecal Coliforms Organisms in a 100 ml sample</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>ASL/TM/HACH/8001</Text>
-            </View>
-            <View style={[styles.tableCell, { width: "20%" }]}>
-              <Text>Shall be absent</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.faecal_coliforms_mpn_result}</Text>
-            </View>
-            <View
-              style={[styles.tableCell, { width: "12.5%" }, styles.centerText]}>
-              <Text>{certificate.faecal_coliforms_mpn_remark}</Text>
-            </View>
-          </View>
+              {certificate.faecal_coliforms_mpn_result &&
+                certificate.faecal_coliforms_mpn_result !== "ND" && (
+                  <View style={styles.tableRow} wrap={false}>
+                    <View style={[styles.tableCell, { width: "35%" }]}>
+                      <Text>
+                        MPN of Faecal Coliforms Organisms in a 100 ml sample
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>ASL/TM/HACH/8001</Text>
+                    </View>
+                    <View style={[styles.tableCell, { width: "20%" }]}>
+                      <Text>Shall be absent</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.faecal_coliforms_mpn_result}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.tableCell,
+                        { width: "12.5%" },
+                        styles.centerText,
+                      ]}>
+                      <Text>{certificate.faecal_coliforms_mpn_remark}</Text>
+                    </View>
+                  </View>
+                )}
+            </>
+          )}
         </View>
 
         {certificate.comments && (
