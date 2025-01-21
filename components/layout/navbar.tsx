@@ -32,7 +32,7 @@ export function Navbar() {
             variant='ghost'
             size='sm'
             onClick={handleSignOut}
-            className='text-muted-foreground hover:text-foreground transition-colors'>
+            className='text-muted-foreground text-black hover:text-foreground transition-colors'>
             <LogOut className='h-4 w-4 mr-2' />
             Sign out
           </Button>

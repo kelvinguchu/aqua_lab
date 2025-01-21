@@ -1,71 +1,36 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { supabase } from "@/lib/supabase/client";
 
-const formSchema = z.object({
-  email: z.string().min(1, "Username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+export default async function LoginPage() {
+  const handleLogin = async (formData: FormData) => {
+    "use server";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+    const supabase = await createClient();
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      setIsLoading(true);
-      setError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) throw error;
-
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("Authentication error:", error);
-      setError(error instanceof Error ? error.message : "Failed to sign in");
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      return redirect("/auth/login?error=" + encodeURIComponent(error.message));
     }
-  }
+
+    return redirect("/dashboard");
+  };
 
   return (
     <div className='flex min-h-screen bg-gradient-to-br from-blue-50 to-white'>
@@ -98,65 +63,43 @@ export default function LoginPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className='space-y-4'>
-                {error && (
-                  <div className='bg-red-50 text-red-600 p-3 rounded-md text-sm'>
-                    {error}
-                  </div>
-                )}
-                <FormField
-                  control={form.control}
+            <form action={handleLogin} className='space-y-4'>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='email'
+                  className='text-sm font-medium text-gray-700'>
+                  Email
+                </label>
+                <Input
+                  id='email'
                   name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className='text-gray-700'>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder='Enter your email'
-                          className='bg-white/70 border-gray-200'
-                          disabled={isLoading}
-                          suppressHydrationWarning
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  type='email'
+                  placeholder='Enter your email'
+                  className='bg-white/70 border-gray-200'
+                  required
                 />
-                <FormField
-                  control={form.control}
+              </div>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='password'
+                  className='text-sm font-medium text-gray-700'>
+                  Password
+                </label>
+                <Input
+                  id='password'
                   name='password'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className='text-gray-700'>Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Enter your password'
-                          className='bg-white/70 border-gray-200'
-                          {...field}
-                          disabled={isLoading}
-                          suppressHydrationWarning
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  type='password'
+                  placeholder='Enter your password'
+                  className='bg-white/70 border-gray-200'
+                  required
                 />
-                <Button
-                  className='w-full bg-[#0086CB] hover:bg-[#005A88] text-white transition-colors'
-                  type='submit'
-                  disabled={isLoading}>
-                  {isLoading && (
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  )}
-                  Sign in
-                </Button>
-              </form>
-            </Form>
+              </div>
+              <Button
+                className='w-full bg-[#0086CB] hover:bg-[#005A88] text-white transition-colors'
+                type='submit'>
+                Sign in
+              </Button>
+            </form>
           </CardContent>
           <CardFooter className='flex flex-col space-y-4'>
             <div className='text-sm text-gray-600 text-center'>

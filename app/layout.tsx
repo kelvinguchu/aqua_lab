@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import localFont from "next/font/local";
 
-const inter = Inter({ subsets: ["latin"] });
+const geistmono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geistmono",
+});
 
 export const metadata: Metadata = {
   title: "Aquatreat Lab",
@@ -20,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className='light'>
-      <body className={inter.className}>
+      <body className={geistmono.className}>
         <Providers>
           <div className='min-h-screen bg-[#EBF3FB]'>{children}</div>
         </Providers>
