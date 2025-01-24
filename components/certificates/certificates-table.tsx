@@ -38,6 +38,7 @@ import {
 import type { Certificate } from "@/lib/supabase";
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { CertificateEditDrawer } from "@/components/certificates/certificate-edit-drawer";
 
 interface CertificatesTableProps {
   certificates: Certificate[];
@@ -67,6 +68,8 @@ export function CertificatesTable({
   const router = useRouter();
   const { toast } = useToast();
   const [selectedCertificate, setSelectedCertificate] =
+    useState<Certificate | null>(null);
+  const [editingCertificate, setEditingCertificate] =
     useState<Certificate | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,9 +269,7 @@ export function CertificatesTable({
                         View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          router.push(`/certificates/${cert.id}/edit`)
-                        }>
+                        onClick={() => setEditingCertificate(cert)}>
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => generatePDF(cert)}>
@@ -719,6 +720,12 @@ export function CertificatesTable({
           )}
         </SheetContent>
       </Sheet>
+
+      <CertificateEditDrawer
+        open={!!editingCertificate}
+        onOpenChange={(open) => !open && setEditingCertificate(null)}
+        certificate={editingCertificate}
+      />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { CertificatesTable } from "@/components/certificates/certificates-table";
+import { CertificateDrawer } from "@/components/certificates/certificate-drawer";
 import { supabase } from "@/lib/supabase";
 import type { Certificate } from "@/lib/supabase";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -25,6 +26,7 @@ const fetchCertificates = async (): Promise<Certificate[]> => {
 
 export default function Dashboard() {
   const router = useRouter();
+  const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false);
 
   // React Query for caching and automatic revalidation
   const {
@@ -72,10 +74,15 @@ export default function Dashboard() {
         <CardContent className='pt-6'>
           <CertificatesTable
             certificates={certificates}
-            onNew={() => router.push("/certificates/new")}
+            onNew={() => setIsNewDrawerOpen(true)}
           />
         </CardContent>
       </Card>
+
+      <CertificateDrawer
+        open={isNewDrawerOpen}
+        onOpenChange={setIsNewDrawerOpen}
+      />
     </main>
   );
 }

@@ -242,15 +242,31 @@ type ParameterCategory =
 type TestParameterWithMeta = {
   id: string;
   name: string;
-  type: "number" | "text";
+  type: "text";
   resultKey: keyof FormValues;
   remarkKey: keyof FormValues;
   category: ParameterCategory;
 };
 
 // Define test parameters
-const TEST_PARAMETERS: TestParameterWithMeta[] = [
+export const TEST_PARAMETERS: TestParameterWithMeta[] = [
   // Physical Tests
+  {
+    id: "ph",
+    name: "pH",
+    type: "text",
+    resultKey: "ph_result",
+    remarkKey: "ph_remark",
+    category: "physical",
+  },
+  {
+    id: "turbidity",
+    name: "Turbidity",
+    type: "text",
+    resultKey: "turbidity_result",
+    remarkKey: "turbidity_remark",
+    category: "physical",
+  },
   {
     id: "color",
     name: "Color",
@@ -260,51 +276,51 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
     category: "physical",
   },
   {
-    id: "conductivity",
-    name: "Conductivity",
-    type: "number",
-    resultKey: "conductivity_result",
-    remarkKey: "conductivity_remark",
-    category: "physical",
-  },
-  {
-    id: "ph",
-    name: "pH",
-    type: "number",
-    resultKey: "ph_result",
-    remarkKey: "ph_remark",
-    category: "physical",
-  },
-  {
-    id: "tds",
-    name: "TDS",
-    type: "number",
-    resultKey: "tds_result",
-    remarkKey: "tds_remark",
-    category: "physical",
-  },
-  {
     id: "tss",
-    name: "TSS",
-    type: "number",
+    name: "Total Suspended Solids (TSS)",
+    type: "text",
     resultKey: "tss_result",
     remarkKey: "tss_remark",
     category: "physical",
   },
   {
-    id: "turbidity",
-    name: "Turbidity",
-    type: "number",
-    resultKey: "turbidity_result",
-    remarkKey: "turbidity_remark",
+    id: "tds",
+    name: "Total Dissolved Solids (TDS)",
+    type: "text",
+    resultKey: "tds_result",
+    remarkKey: "tds_remark",
+    category: "physical",
+  },
+  {
+    id: "conductivity",
+    name: "Conductivity",
+    type: "text",
+    resultKey: "conductivity_result",
+    remarkKey: "conductivity_remark",
     category: "physical",
   },
 
   // Chemical Tests (Anions)
   {
+    id: "ph_alkalinity",
+    name: "pH Alkalinity",
+    type: "text",
+    resultKey: "ph_alkalinity_result",
+    remarkKey: "ph_alkalinity_remark",
+    category: "anions",
+  },
+  {
+    id: "total_alkalinity",
+    name: "Total Alkalinity",
+    type: "text",
+    resultKey: "total_alkalinity_result",
+    remarkKey: "total_alkalinity_remark",
+    category: "anions",
+  },
+  {
     id: "chloride",
     name: "Chloride",
-    type: "number",
+    type: "text",
     resultKey: "chloride_result",
     remarkKey: "chloride_remark",
     category: "anions",
@@ -312,15 +328,23 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "fluoride",
     name: "Fluoride",
-    type: "number",
+    type: "text",
     resultKey: "fluoride_result",
     remarkKey: "fluoride_remark",
     category: "anions",
   },
   {
+    id: "sulfate",
+    name: "Sulfate",
+    type: "text",
+    resultKey: "sulfate_result",
+    remarkKey: "sulfate_remark",
+    category: "anions",
+  },
+  {
     id: "nitrate",
     name: "Nitrate",
-    type: "number",
+    type: "text",
     resultKey: "nitrate_result",
     remarkKey: "nitrate_remark",
     category: "anions",
@@ -328,33 +352,41 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "nitrite",
     name: "Nitrite",
-    type: "number",
+    type: "text",
     resultKey: "nitrite_result",
     remarkKey: "nitrite_remark",
     category: "anions",
   },
   {
-    id: "sulfate",
-    name: "Sulfate",
-    type: "number",
-    resultKey: "sulfate_result",
-    remarkKey: "sulfate_remark",
+    id: "phosphate",
+    name: "Phosphate",
+    type: "text",
+    resultKey: "phosphate_result",
+    remarkKey: "phosphate_remark",
     category: "anions",
   },
   {
-    id: "free_chlorine",
-    name: "Free Chlorine",
-    type: "number",
-    resultKey: "free_chlorine_result",
-    remarkKey: "free_chlorine_remark",
+    id: "sulfide",
+    name: "Sulfide",
+    type: "text",
+    resultKey: "sulfide_result",
+    remarkKey: "sulfide_remark",
     category: "anions",
   },
 
   // Chemical Tests (Cations)
   {
+    id: "potassium",
+    name: "Potassium",
+    type: "text",
+    resultKey: "potassium_result",
+    remarkKey: "potassium_remark",
+    category: "cations",
+  },
+  {
     id: "calcium",
     name: "Calcium",
-    type: "number",
+    type: "text",
     resultKey: "calcium_result",
     remarkKey: "calcium_remark",
     category: "cations",
@@ -362,23 +394,15 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "magnesium",
     name: "Magnesium",
-    type: "number",
+    type: "text",
     resultKey: "magnesium_result",
     remarkKey: "magnesium_remark",
     category: "cations",
   },
   {
-    id: "potassium",
-    name: "Potassium",
-    type: "number",
-    resultKey: "potassium_result",
-    remarkKey: "potassium_remark",
-    category: "cations",
-  },
-  {
     id: "iron",
     name: "Iron",
-    type: "number",
+    type: "text",
     resultKey: "iron_result",
     remarkKey: "iron_remark",
     category: "cations",
@@ -386,15 +410,23 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "manganese",
     name: "Manganese",
-    type: "number",
+    type: "text",
     resultKey: "manganese_result",
     remarkKey: "manganese_remark",
     category: "cations",
   },
   {
+    id: "ammonia",
+    name: "Ammonia",
+    type: "text",
+    resultKey: "ammonia_result",
+    remarkKey: "ammonia_remark",
+    category: "cations",
+  },
+  {
     id: "copper",
     name: "Copper",
-    type: "number",
+    type: "text",
     resultKey: "copper_result",
     remarkKey: "copper_remark",
     category: "cations",
@@ -402,7 +434,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "zinc",
     name: "Zinc",
-    type: "number",
+    type: "text",
     resultKey: "zinc_result",
     remarkKey: "zinc_remark",
     category: "cations",
@@ -410,7 +442,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "chromium",
     name: "Chromium",
-    type: "number",
+    type: "text",
     resultKey: "chromium_result",
     remarkKey: "chromium_remark",
     category: "cations",
@@ -420,7 +452,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "total_hardness",
     name: "Total Hardness",
-    type: "number",
+    type: "text",
     resultKey: "total_hardness_result",
     remarkKey: "total_hardness_remark",
     category: "other",
@@ -428,7 +460,7 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "calcium_hardness",
     name: "Calcium Hardness",
-    type: "number",
+    type: "text",
     resultKey: "calcium_hardness_result",
     remarkKey: "calcium_hardness_remark",
     category: "other",
@@ -436,104 +468,42 @@ const TEST_PARAMETERS: TestParameterWithMeta[] = [
   {
     id: "magnesium_hardness",
     name: "Magnesium Hardness",
-    type: "number",
+    type: "text",
     resultKey: "magnesium_hardness_result",
     remarkKey: "magnesium_hardness_remark",
     category: "other",
   },
   {
-    id: "ph_alkalinity",
-    name: "pH Alkalinity",
-    type: "number",
-    resultKey: "ph_alkalinity_result",
-    remarkKey: "ph_alkalinity_remark",
-    category: "other",
-  },
-  {
-    id: "total_alkalinity",
-    name: "Total Alkalinity",
-    type: "number",
-    resultKey: "total_alkalinity_result",
-    remarkKey: "total_alkalinity_remark",
-    category: "other",
-  },
-  {
     id: "silica",
     name: "Silica",
-    type: "number",
+    type: "text",
     resultKey: "silica_result",
     remarkKey: "silica_remark",
     category: "other",
   },
   {
-    id: "phosphate",
-    name: "Phosphate",
-    type: "number",
-    resultKey: "phosphate_result",
-    remarkKey: "phosphate_remark",
+    id: "free_chlorine",
+    name: "Free Chlorine",
+    type: "text",
+    resultKey: "free_chlorine_result",
+    remarkKey: "free_chlorine_remark",
     category: "other",
-  },
-  {
-    id: "sulfide",
-    name: "Sulfide",
-    type: "number",
-    resultKey: "sulfide_result",
-    remarkKey: "sulfide_remark",
-    category: "other",
-  },
-  {
-    id: "ammonia",
-    name: "Ammonia",
-    type: "number",
-    resultKey: "ammonia_result",
-    remarkKey: "ammonia_remark",
-    category: "other",
-  },
-
-  // Microbiological Tests
-  {
-    id: "total_viable_counts",
-    name: "Total Viable Counts",
-    type: "text",
-    resultKey: "total_viable_counts_result",
-    remarkKey: "total_viable_counts_remark",
-    category: "microbiological",
-  },
-  {
-    id: "coliforms_mpn",
-    name: "Coliforms MPN",
-    type: "text",
-    resultKey: "coliforms_mpn_result",
-    remarkKey: "coliforms_mpn_remark",
-    category: "microbiological",
-  },
-  {
-    id: "ecoli_mpn",
-    name: "E. coli MPN",
-    type: "text",
-    resultKey: "ecoli_mpn_result",
-    remarkKey: "ecoli_mpn_remark",
-    category: "microbiological",
-  },
-  {
-    id: "faecal_coliforms_mpn",
-    name: "Faecal Coliforms MPN",
-    type: "text",
-    resultKey: "faecal_coliforms_mpn_result",
-    remarkKey: "faecal_coliforms_mpn_remark",
-    category: "microbiological",
   },
 ];
 
-// Define the getParametersByCategory function
-const getParametersByCategory = (category: ParameterCategory) =>
+// Helper function to get parameters by category
+export const getParametersByCategory = (category: ParameterCategory) =>
   TEST_PARAMETERS.filter((param) => param.category === category);
 
 interface CertificateEditProps {
   certificate: Certificate;
+  onClose: () => void;
 }
 
-export function CertificateEdit({ certificate }: CertificateEditProps) {
+export function CertificateEdit({
+  certificate,
+  onClose,
+}: CertificateEditProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -695,7 +665,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
   };
 
   return (
-    <>
+    <div className='space-y-6 p-4 pb-8'>
       {isLoading && (
         <div className='fixed inset-0 bg-background/80 backdrop-blur-sm z-50'>
           <div className='fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]'>
@@ -704,9 +674,7 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
         </div>
       )}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-6 pb-10'>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
           {error && (
             <div className='bg-destructive/15 text-destructive p-4 rounded-lg border border-destructive/20'>
               {error}
@@ -988,334 +956,273 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Accordion type='single' collapsible className='w-full space-y-4'>
-                {/* Physical Tests */}
-                <AccordionItem
-                  value='physical'
-                  className='border rounded-lg px-6'>
-                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
-                    Physical Tests
-                  </AccordionTrigger>
-                  <AccordionContent className='pt-4 pb-6 px-2'>
-                    <div className='grid gap-6'>
-                      {getParametersByCategory("physical").map((param) => (
-                        <div
-                          key={param.resultKey}
-                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <FormField
-                            control={form.control}
-                            name={param.resultKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Result
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type={
-                                      param.type === "number"
-                                        ? "number"
-                                        : "text"
-                                    }
-                                    step={
-                                      param.type === "number"
-                                        ? "0.1"
-                                        : undefined
-                                    }
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={param.remarkKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Remark
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+              {/* Physical Tests */}
+              <div className='space-y-8'>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>Physical Tests</h3>
+                  <div className='grid gap-6'>
+                    {getParametersByCategory("physical").map((param) => (
+                      <div
+                        key={param.resultKey}
+                        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <FormField
+                          control={form.control}
+                          name={param.resultKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Result
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter result'
+                                  className='font-mono'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={param.remarkKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Remark
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter remark'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Chemical Tests (Anions) */}
-                <AccordionItem
-                  value='anions'
-                  className='border rounded-lg px-6'>
-                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>
                     Chemical Tests (Anions)
-                  </AccordionTrigger>
-                  <AccordionContent className='pt-4 pb-6 px-2'>
-                    <div className='grid gap-6'>
-                      {getParametersByCategory("anions").map((param) => (
-                        <div
-                          key={param.resultKey}
-                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <FormField
-                            control={form.control}
-                            name={param.resultKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Result
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type={
-                                      param.type === "number"
-                                        ? "number"
-                                        : "text"
-                                    }
-                                    step={
-                                      param.type === "number"
-                                        ? "0.1"
-                                        : undefined
-                                    }
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={param.remarkKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Remark
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                  </h3>
+                  <div className='grid gap-6'>
+                    {getParametersByCategory("anions").map((param) => (
+                      <div
+                        key={param.resultKey}
+                        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <FormField
+                          control={form.control}
+                          name={param.resultKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Result
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter result'
+                                  className='font-mono'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={param.remarkKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Remark
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter remark'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Chemical Tests (Cations) */}
-                <AccordionItem
-                  value='cations'
-                  className='border rounded-lg px-6'>
-                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>
                     Chemical Tests (Cations)
-                  </AccordionTrigger>
-                  <AccordionContent className='pt-4 pb-6 px-2'>
-                    <div className='grid gap-6'>
-                      {getParametersByCategory("cations").map((param) => (
-                        <div
-                          key={param.resultKey}
-                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <FormField
-                            control={form.control}
-                            name={param.resultKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Result
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type={
-                                      param.type === "number"
-                                        ? "number"
-                                        : "text"
-                                    }
-                                    step={
-                                      param.type === "number"
-                                        ? "0.1"
-                                        : undefined
-                                    }
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={param.remarkKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Remark
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                  </h3>
+                  <div className='grid gap-6'>
+                    {getParametersByCategory("cations").map((param) => (
+                      <div
+                        key={param.resultKey}
+                        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <FormField
+                          control={form.control}
+                          name={param.resultKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Result
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter result'
+                                  className='font-mono'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={param.remarkKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Remark
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter remark'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Other Parameters */}
-                <AccordionItem value='other' className='border rounded-lg px-6'>
-                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
-                    Other Parameters
-                  </AccordionTrigger>
-                  <AccordionContent className='pt-4 pb-6 px-2'>
-                    <div className='grid gap-6'>
-                      {getParametersByCategory("other").map((param) => (
-                        <div
-                          key={param.resultKey}
-                          className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                          <FormField
-                            control={form.control}
-                            name={param.resultKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Result
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type={
-                                      param.type === "number"
-                                        ? "number"
-                                        : "text"
-                                    }
-                                    step={
-                                      param.type === "number"
-                                        ? "0.1"
-                                        : undefined
-                                    }
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={param.remarkKey}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-sm font-medium'>
-                                  {param.name} Remark
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value?.toString() ?? ""}
-                                    className='transition-colors focus:bg-background'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>Other Parameters</h3>
+                  <div className='grid gap-6'>
+                    {getParametersByCategory("other").map((param) => (
+                      <div
+                        key={param.resultKey}
+                        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <FormField
+                          control={form.control}
+                          name={param.resultKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Result
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter result'
+                                  className='font-mono'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={param.remarkKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Remark
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  placeholder='Enter remark'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Microbiological Tests */}
-                <AccordionItem
-                  value='microbiological'
-                  className='border rounded-lg px-6'>
-                  <AccordionTrigger className='text-lg font-semibold hover:bg-accent/50 rounded-md py-4 transition-colors'>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>
                     Microbiological Tests
-                  </AccordionTrigger>
-                  <AccordionContent className='pt-4 pb-6 px-2'>
-                    <div className='grid gap-6'>
-                      {getParametersByCategory("microbiological").map(
-                        (param) => (
-                          <div
-                            key={param.resultKey}
-                            className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                            <FormField
-                              control={form.control}
-                              name={param.resultKey}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className='text-sm font-medium'>
-                                    {param.name} Result
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      {...field}
-                                      placeholder='ND'
-                                      value={field.value?.toString() ?? ""}
-                                      className='transition-colors focus:bg-background'
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={param.remarkKey}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className='text-sm font-medium'>
-                                    {param.name} Remark
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      {...field}
-                                      placeholder='PASS'
-                                      value={field.value?.toString() ?? ""}
-                                      className='transition-colors focus:bg-background'
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                  </h3>
+                  <div className='grid gap-6'>
+                    {getParametersByCategory("microbiological").map((param) => (
+                      <div
+                        key={param.resultKey}
+                        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <FormField
+                          control={form.control}
+                          name={param.resultKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Result
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder='ND'
+                                  value={field.value?.toString() || ""}
+                                  className='font-mono'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={param.remarkKey}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium'>
+                                {param.name} Remark
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder='PASS'
+                                  value={field.value?.toString() || ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -1348,11 +1255,11 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
             </CardContent>
           </Card>
 
-          <div className='flex justify-end gap-4 pt-4'>
+          <div className='fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-end gap-4'>
             <Button
               type='button'
               variant='outline'
-              onClick={() => router.push("/")}
+              onClick={onClose}
               className='min-w-[100px] transition-colors hover:bg-accent'>
               Cancel
             </Button>
@@ -1365,6 +1272,6 @@ export function CertificateEdit({ certificate }: CertificateEditProps) {
           </div>
         </form>
       </Form>
-    </>
+    </div>
   );
 }
