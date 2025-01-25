@@ -105,14 +105,14 @@ export async function createCertificate(data: FormValues) {
       free_chlorine_remark: data.free_chlorine_remark || null,
 
       // Microbiological Tests
-      total_viable_counts_result: data.total_viable_counts_result || "ND",
-      total_viable_counts_remark: data.total_viable_counts_remark || "PASS",
-      coliforms_mpn_result: data.coliforms_mpn_result || "ND",
-      coliforms_mpn_remark: data.coliforms_mpn_remark || "PASS",
-      ecoli_mpn_result: data.ecoli_mpn_result || "ND",
-      ecoli_mpn_remark: data.ecoli_mpn_remark || "PASS",
-      faecal_coliforms_mpn_result: data.faecal_coliforms_mpn_result || "ND",
-      faecal_coliforms_mpn_remark: data.faecal_coliforms_mpn_remark || "PASS",
+      total_viable_counts_result: data.total_viable_counts_result || null,
+      total_viable_counts_remark: data.total_viable_counts_remark || null,
+      coliforms_mpn_result: data.coliforms_mpn_result || null,
+      coliforms_mpn_remark: data.coliforms_mpn_remark || null,
+      ecoli_mpn_result: data.ecoli_mpn_result || null,
+      ecoli_mpn_remark: data.ecoli_mpn_remark || null,
+      faecal_coliforms_mpn_result: data.faecal_coliforms_mpn_result || null,
+      faecal_coliforms_mpn_remark: data.faecal_coliforms_mpn_remark || null,
 
       // Metadata
       comments: data.comments || null,
