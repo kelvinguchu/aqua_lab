@@ -4,7 +4,8 @@ export type CertificateType =
   | "physical_chemical"
   | "microbiological"
   | "effluent"
-  | "irrigation";
+  | "irrigation"
+  | "borehole";
 
 export interface BasePDFProps {
   certificate: Certificate;
