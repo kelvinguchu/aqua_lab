@@ -5,7 +5,11 @@ import { styles } from "../shared/styles";
 import { Header } from "../shared/header";
 import { Footer } from "../shared/footer";
 import { DateSection } from "../shared/date-section";
-import { BasePDFProps, DateInfo, TestParameter } from "../shared/types";
+import {
+  MicrobiologicalPDFProps,
+  TestCategory,
+  MicrobiologicalResults,
+} from "../shared/types";
 
 const MICROBIOLOGICAL_LEGENDS = [
   "NS: Not Set Standard",
@@ -42,23 +46,13 @@ const TestCategorySection = ({
   title,
   parameters,
   certificate,
-}: {
-  title: string;
-  parameters: TestParameter[];
-  certificate: any;
-}) => {
+  results,
+}: TestCategory<MicrobiologicalResults> & MicrobiologicalPDFProps) => {
   // Filter out empty parameters
-  const nonEmptyParameters = parameters.filter((param) => {
-    const result = certificate[param.resultKey];
-    return (
-      result !== null &&
-      result !== undefined &&
-      result !== "" &&
-      result !== "ND" &&
-      result !== "NaN" &&
-      String(result).toLowerCase() !== "nan"
-    );
-  });
+  const nonEmptyParameters = parameters.filter(
+    (param) =>
+      results[param.resultKey] !== null && results[param.resultKey] !== ""
+  );
 
   if (nonEmptyParameters.length === 0) return null;
 
@@ -79,13 +73,13 @@ const TestCategorySection = ({
             <Text>{param.unit}</Text>
           </View>
           <View style={[styles.tableCell, { width: "15%" }]}>
-            <Text>{certificate[param.resultKey]}</Text>
+            <Text>{results[param.resultKey]}</Text>
           </View>
           <View style={[styles.tableCell, { width: "15%" }]}>
             <Text>{param.standard}</Text>
           </View>
           <View style={[styles.tableCell, { width: "10%" }]}>
-            <Text>{certificate[param.remarkKey]}</Text>
+            <Text>{results[param.remarkKey]}</Text>
           </View>
         </View>
       ))}
@@ -93,8 +87,11 @@ const TestCategorySection = ({
   );
 };
 
-export function MicrobiologicalPDF({ certificate }: BasePDFProps) {
-  const dateInfo: DateInfo[] = [
+export function MicrobiologicalPDF({
+  certificate,
+  results,
+}: MicrobiologicalPDFProps) {
+  const dateInfo = [
     { label: "Date:", value: certificate.date_of_report },
     { label: "Sample ID:", value: certificate.sample_id },
     { label: "Certificate:", value: certificate.certificate_id },
@@ -109,6 +106,44 @@ export function MicrobiologicalPDF({ certificate }: BasePDFProps) {
     { label: "Sampled By:", value: certificate.sampled_by },
   ];
 
+  const microbiologicalTests: TestCategory<MicrobiologicalResults> = {
+    title: "MICROBIOLOGICAL TESTS",
+    parameters: [
+      {
+        name: "Total Viable Counts",
+        method: "ASL/TM/HACH/8242",
+        unit: "CFU/ml",
+        standard: "< 100",
+        resultKey: "total_viable_counts_result",
+        remarkKey: "total_viable_counts_remark",
+      },
+      {
+        name: "Total Coliforms MPN",
+        method: "ASL/TM/HACH/8074",
+        unit: "MPN/100ml",
+        standard: "NIL",
+        resultKey: "coliforms_mpn_result",
+        remarkKey: "coliforms_mpn_remark",
+      },
+      {
+        name: "E. coli MPN",
+        method: "ASL/TM/HACH/8074",
+        unit: "MPN/100ml",
+        standard: "NIL",
+        resultKey: "ecoli_mpn_result",
+        remarkKey: "ecoli_mpn_remark",
+      },
+      {
+        name: "Faecal Coliforms MPN",
+        method: "ASL/TM/HACH/8074",
+        unit: "MPN/100ml",
+        standard: "NIL",
+        resultKey: "faecal_coliforms_mpn_result",
+        remarkKey: "faecal_coliforms_mpn_remark",
+      },
+    ],
+  };
+
   return (
     <Document>
       <Page size='A4' style={styles.page} wrap>
@@ -121,41 +156,9 @@ export function MicrobiologicalPDF({ certificate }: BasePDFProps) {
           {/* Microbiological Tests */}
           <TestCategorySection
             title='MICROBIOLOGICAL TESTS'
-            parameters={[
-              {
-                name: "Total Viable Counts",
-                method: "ASL/TM/HACH/8242",
-                unit: "CFU/ml",
-                standard: "< 100",
-                resultKey: "total_viable_counts_result",
-                remarkKey: "total_viable_counts_remark",
-              },
-              {
-                name: "Total Coliforms MPN",
-                method: "ASL/TM/HACH/8074",
-                unit: "MPN/100ml",
-                standard: "NIL",
-                resultKey: "coliforms_mpn_result",
-                remarkKey: "coliforms_mpn_remark",
-              },
-              {
-                name: "E. coli MPN",
-                method: "ASL/TM/HACH/8074",
-                unit: "MPN/100ml",
-                standard: "NIL",
-                resultKey: "ecoli_mpn_result",
-                remarkKey: "ecoli_mpn_remark",
-              },
-              {
-                name: "Faecal Coliforms MPN",
-                method: "ASL/TM/HACH/8074",
-                unit: "MPN/100ml",
-                standard: "NIL",
-                resultKey: "faecal_coliforms_mpn_result",
-                remarkKey: "faecal_coliforms_mpn_remark",
-              },
-            ]}
+            parameters={microbiologicalTests.parameters}
             certificate={certificate}
+            results={results}
           />
         </View>
 

@@ -5,7 +5,11 @@ import { styles } from "../shared/styles";
 import { Header } from "../shared/header";
 import { Footer } from "../shared/footer";
 import { DateSection } from "../shared/date-section";
-import { BasePDFProps, TestCategory } from "../shared/types";
+import {
+  BoreholePDFProps,
+  TestCategory,
+  BoreholeResults,
+} from "../shared/types";
 
 const BOREHOLE_LEGENDS = [
   "NS: Not Set Standard",
@@ -29,12 +33,12 @@ const TestCategorySection = ({
   title,
   parameters,
   certificate,
-}: TestCategory & { certificate: BasePDFProps["certificate"] }) => {
+  results,
+}: TestCategory<BoreholeResults> & BoreholePDFProps) => {
   // Filter out parameters with empty results
   const nonEmptyParameters = parameters.filter(
     (param) =>
-      certificate[param.resultKey] !== null &&
-      certificate[param.resultKey] !== ""
+      results[param.resultKey] !== null && results[param.resultKey] !== ""
   );
 
   if (nonEmptyParameters.length === 0) return null;
@@ -49,9 +53,9 @@ const TestCategorySection = ({
             <Text style={styles.tableCell}>{param.name}</Text>
             <Text style={styles.tableCell}>{param.method}</Text>
             <Text style={styles.tableCell}>{param.unit}</Text>
-            <Text style={styles.tableCell}>{certificate[param.resultKey]}</Text>
+            <Text style={styles.tableCell}>{results[param.resultKey]}</Text>
             <Text style={styles.tableCell}>{param.standard}</Text>
-            <Text style={styles.tableCell}>{certificate[param.remarkKey]}</Text>
+            <Text style={styles.tableCell}>{results[param.remarkKey]}</Text>
           </View>
         ))}
       </View>
@@ -59,7 +63,7 @@ const TestCategorySection = ({
   );
 };
 
-export function BoreholePDF({ certificate }: BasePDFProps) {
+export function BoreholePDF({ certificate, results }: BoreholePDFProps) {
   const dateInfo = [
     { label: "Date of Report", value: certificate.date_of_report },
     { label: "Date of Report Issue", value: certificate.date_of_report_issue },
@@ -76,7 +80,7 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
     { label: "Date of Analysis", value: certificate.date_of_analysis },
   ];
 
-  const physicalTests: TestCategory = {
+  const physicalTests: TestCategory<BoreholeResults> = {
     title: "Physical Tests",
     parameters: [
       {
@@ -84,53 +88,53 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
         method: "ASL/TM/HACH/8156",
         unit: "pH units",
         standard: "6.5-8.5",
-        resultKey: "ph_result",
-        remarkKey: "ph_remark",
+        resultKey: "borehole_ph_result",
+        remarkKey: "borehole_ph_remark",
       },
       {
         name: "Turbidity",
         method: "ASL/TM/HACH/8195",
         unit: "NTU",
         standard: "< 5.0",
-        resultKey: "turbidity_result",
-        remarkKey: "turbidity_remark",
+        resultKey: "borehole_turbidity_result",
+        remarkKey: "borehole_turbidity_remark",
       },
       {
         name: "Color",
         method: "ASL/TM/HACH/8025",
         unit: "Pt. Co. APHA",
         standard: "15 TCU",
-        resultKey: "color_result",
-        remarkKey: "color_remark",
+        resultKey: "borehole_color_result",
+        remarkKey: "borehole_color_remark",
       },
       {
         name: "Total Suspended Solids",
         method: "ASL/TM/HACH/8006",
         unit: "mg/L",
         standard: "NIL",
-        resultKey: "tss_result",
-        remarkKey: "tss_remark",
+        resultKey: "borehole_tss_result",
+        remarkKey: "borehole_tss_remark",
       },
       {
         name: "Total Dissolved Solids",
         method: "ASL/TM/HACH/8169",
         unit: "mg/L",
         standard: "1000 Max.",
-        resultKey: "tds_result",
-        remarkKey: "tds_remark",
+        resultKey: "borehole_tds_result",
+        remarkKey: "borehole_tds_remark",
       },
       {
         name: "Conductivity",
         method: "ASL/TM/HACH/8169",
         unit: "µS/cm",
         standard: "1500",
-        resultKey: "conductivity_result",
-        remarkKey: "conductivity_remark",
+        resultKey: "borehole_conductivity_result",
+        remarkKey: "borehole_conductivity_remark",
       },
     ],
   };
 
-  const chemicalTestsAnions: TestCategory = {
+  const chemicalTestsAnions: TestCategory<BoreholeResults> = {
     title: "Chemical Tests (Anions)",
     parameters: [
       {
@@ -138,13 +142,13 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
         method: "ASL/TM/HACH/8029",
         unit: "mg/L F⁻",
         standard: "1.5",
-        resultKey: "fluoride_result",
-        remarkKey: "fluoride_remark",
+        resultKey: "borehole_fluoride_result",
+        remarkKey: "borehole_fluoride_remark",
       },
     ],
   };
 
-  const chemicalTestsCations: TestCategory = {
+  const chemicalTestsCations: TestCategory<BoreholeResults> = {
     title: "Chemical Tests (Cations)",
     parameters: [
       {
@@ -152,37 +156,37 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
         method: "ASL/TM/HACH/8213",
         unit: "mg/L Ca",
         standard: "150",
-        resultKey: "calcium_result",
-        remarkKey: "calcium_remark",
+        resultKey: "borehole_calcium_result",
+        remarkKey: "borehole_calcium_remark",
       },
       {
         name: "Magnesium",
         method: "ASL/TM/HACH/8213",
         unit: "mg/L Mg",
         standard: "100",
-        resultKey: "magnesium_result",
-        remarkKey: "magnesium_remark",
+        resultKey: "borehole_magnesium_result",
+        remarkKey: "borehole_magnesium_remark",
       },
       {
         name: "Iron",
         method: "ASL/TM/HACH/8008",
         unit: "mg/L Fe",
         standard: "0.3",
-        resultKey: "iron_result",
-        remarkKey: "iron_remark",
+        resultKey: "borehole_iron_result",
+        remarkKey: "borehole_iron_remark",
       },
       {
         name: "Manganese",
         method: "ASL/TM/HACH/8149",
         unit: "mg/L Mn",
         standard: "0.1",
-        resultKey: "manganese_result",
-        remarkKey: "manganese_remark",
+        resultKey: "borehole_manganese_result",
+        remarkKey: "borehole_manganese_remark",
       },
     ],
   };
 
-  const otherParameters: TestCategory = {
+  const otherParameters: TestCategory<BoreholeResults> = {
     title: "Other Parameters",
     parameters: [
       {
@@ -190,24 +194,24 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
         method: "ASL/TM/HACH/8213",
         unit: "mg/L CaCO₃",
         standard: "300",
-        resultKey: "total_hardness_result",
-        remarkKey: "total_hardness_remark",
+        resultKey: "borehole_total_hardness_result",
+        remarkKey: "borehole_total_hardness_remark",
       },
       {
         name: "Calcium Hardness",
         method: "ASL/TM/HACH/8213",
         unit: "mg/L Ca²⁺",
         standard: "NS",
-        resultKey: "calcium_hardness_result",
-        remarkKey: "calcium_hardness_remark",
+        resultKey: "borehole_calcium_hardness_result",
+        remarkKey: "borehole_calcium_hardness_remark",
       },
       {
         name: "Magnesium Hardness",
         method: "ASL/TM/HACH/8213",
         unit: "mg/L Mg²⁺",
         standard: "NS",
-        resultKey: "magnesium_hardness_result",
-        remarkKey: "magnesium_hardness_remark",
+        resultKey: "borehole_magnesium_hardness_result",
+        remarkKey: "borehole_magnesium_hardness_remark",
       },
     ],
   };
@@ -222,21 +226,25 @@ export function BoreholePDF({ certificate }: BasePDFProps) {
           title={physicalTests.title}
           parameters={physicalTests.parameters}
           certificate={certificate}
+          results={results}
         />
         <TestCategorySection
           title={chemicalTestsAnions.title}
           parameters={chemicalTestsAnions.parameters}
           certificate={certificate}
+          results={results}
         />
         <TestCategorySection
           title={chemicalTestsCations.title}
           parameters={chemicalTestsCations.parameters}
           certificate={certificate}
+          results={results}
         />
         <TestCategorySection
           title={otherParameters.title}
           parameters={otherParameters.parameters}
           certificate={certificate}
+          results={results}
         />
 
         {certificate.comments && (

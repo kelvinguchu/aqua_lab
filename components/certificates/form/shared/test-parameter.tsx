@@ -8,28 +8,27 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { FormValues, TestParameterWithMeta } from "./types";
+import { FormValues, TestParameterWithMeta } from "../types";
 import { UseFormReturn } from "react-hook-form";
 
-interface TestParameterProps {
+interface TestParameterProps<T> {
   form: UseFormReturn<FormValues>;
-  parameter: TestParameterWithMeta;
+  parameter: TestParameterWithMeta<T>;
 }
 
-export function TestParameter({ form, parameter }: TestParameterProps) {
+export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+    <div className='grid grid-cols-2 gap-4'>
       <FormField
         control={form.control}
         name={parameter.resultKey}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{parameter.name} Result</FormLabel>
+            <FormLabel>{parameter.name}</FormLabel>
             <FormControl>
               <Input
                 {...field}
                 value={field.value?.toString() || ""}
-                placeholder='Enter result'
                 className='font-mono'
               />
             </FormControl>
@@ -37,19 +36,14 @@ export function TestParameter({ form, parameter }: TestParameterProps) {
           </FormItem>
         )}
       />
-
       <FormField
         control={form.control}
         name={parameter.remarkKey}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{parameter.name} Remark</FormLabel>
+            <FormLabel>Remark</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                value={field.value?.toString() || ""}
-                placeholder='Enter remark'
-              />
+              <Input {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
