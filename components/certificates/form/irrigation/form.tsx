@@ -9,7 +9,7 @@ import { FormFooter } from "../shared/form-footer";
 import { useToast } from "@/hooks/use-toast";
 import { generateCertificateId } from "@/lib/utils/certificate-id";
 import type { Certificate } from "@/lib/supabase";
-import { submitIrrigationForm } from "@/lib/actions/certificates";
+import { submitIrrigationForm } from "@/lib/actions/certificates/irrigation";
 
 interface IrrigationFormProps {
   form: UseFormReturn<FormValues>;
