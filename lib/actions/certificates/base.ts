@@ -20,16 +20,7 @@ export const prepareCertificateData = async (
   data: FormValues,
   certificateType: string
 ) => {
-  console.log("=== Starting prepareCertificateData ===");
-  console.log("Input data:", {
-    certificate_id: data.certificate_id,
-    sample_id: data.sample_id,
-    certificate_type: certificateType,
-    form_data_keys: Object.keys(data),
-  });
-
   if (!data.certificate_id) {
-    console.log("Certificate ID is missing in prepareCertificateData");
     throw new Error("Certificate ID is required");
   }
 
@@ -82,14 +73,6 @@ export const prepareCertificateData = async (
       "Failed to prepare certificate data - missing certificate ID"
     );
   }
-
-  console.log("Prepared data:", {
-    certificate_id: preparedData.certificate_id,
-    sample_id: preparedData.sample_id,
-    certificate_type: preparedData.certificate_type,
-    prepared_data_keys: Object.keys(preparedData),
-    raw_data: preparedData,
-  });
 
   return preparedData;
 };

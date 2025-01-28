@@ -14,6 +14,7 @@ import { FormValues } from "../types";
 import { UseFormReturn } from "react-hook-form";
 import type { Certificate } from "@/lib/supabase";
 import React from "react";
+import { Loader2 } from "lucide-react";
 
 interface HeaderInformationProps {
   form: UseFormReturn<FormValues>;
@@ -26,6 +27,9 @@ export function HeaderInformation({
   certificate,
   certificateId,
 }: HeaderInformationProps) {
+  // Check if we're generating a certificate ID
+  const isGenerating = !certificate && !certificateId;
+
   // Get the ID to display, ensuring it's uppercase
   const displayId = (
     certificate?.certificate_id ||
@@ -47,8 +51,25 @@ export function HeaderInformation({
             <FormItem>
               <FormLabel>Certificate ID</FormLabel>
               <FormControl>
-                <Input {...field} className='font-mono uppercase' readOnly />
+                <div className='relative'>
+                  <Input
+                    {...field}
+                    className='font-mono uppercase'
+                    readOnly
+                    value={certificate?.certificate_id || certificateId || ""}
+                  />
+                  {isGenerating && (
+                    <div className='absolute inset-y-0 right-0 flex items-center pr-3'>
+                      <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                    </div>
+                  )}
+                </div>
               </FormControl>
+              {isGenerating && (
+                <p className='text-sm text-muted-foreground'>
+                  Generating certificate ID...
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
