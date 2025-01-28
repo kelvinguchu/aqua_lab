@@ -21,7 +21,7 @@ export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
     <div className='grid grid-cols-2 gap-4'>
       <FormField
         control={form.control}
-        name={parameter.resultKey}
+        name={parameter.resultKey as keyof FormValues}
         render={({ field }) => (
           <FormItem>
             <FormLabel>{parameter.name}</FormLabel>
@@ -30,6 +30,7 @@ export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
                 {...field}
                 value={field.value?.toString() || ""}
                 className='font-mono'
+                type={parameter.type === "number" ? "number" : "text"}
               />
             </FormControl>
             <FormMessage />
@@ -38,12 +39,12 @@ export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
       />
       <FormField
         control={form.control}
-        name={parameter.remarkKey}
+        name={parameter.remarkKey as keyof FormValues}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Remark</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} value={field.value || ""} />
             </FormControl>
             <FormMessage />
           </FormItem>

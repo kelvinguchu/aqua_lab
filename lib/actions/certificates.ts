@@ -21,19 +21,26 @@ export async function createCertificate(data: FormValues) {
     }
 
     // Format dates for database (YYYY-MM-DD)
-    const formatDatabaseDate = (dateStr: string) =>
-      format(parseISO(dateStr), "yyyy-MM-dd");
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
 
     // Prepare base certificate data
     const certificateData = {
       certificate_id: data.certificate_id,
-      sample_id: data.sample_id,
+      sample_id: data.sample_id || null,
       certificate_type: data.certificate_type,
-      description_of_sample: data.description_of_sample,
-      sample_source: data.sample_source,
-      submitted_by: data.submitted_by,
-      customer_contact: data.customer_contact,
-      sampled_by: data.sampled_by,
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
       date_of_report: formatDatabaseDate(data.date_of_report),
       date_of_sampling: formatDatabaseDate(data.date_of_sampling),
       date_sample_received: formatDatabaseDate(data.date_sample_received),
@@ -694,6 +701,917 @@ export async function createCertificate(data: FormValues) {
     };
   } catch (error) {
     console.error("Error in createCertificate:", error);
+    return {
+      error: "An unexpected error occurred. Please try again.",
+      data: null,
+    };
+  }
+}
+
+export async function submitMicrobiologicalForm(data: FormValues) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: "Unauthorized. Please sign in to create certificates.",
+        data: null,
+      };
+    }
+
+    // Format dates for database (YYYY-MM-DD)
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
+
+    // Prepare base certificate data
+    const certificateData = {
+      certificate_id: data.certificate_id,
+      sample_id: data.sample_id || null,
+      certificate_type: "microbiological",
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
+      date_of_report: formatDatabaseDate(data.date_of_report),
+      date_of_sampling: formatDatabaseDate(data.date_of_sampling),
+      date_sample_received: formatDatabaseDate(data.date_sample_received),
+      date_of_analysis: formatDatabaseDate(data.date_of_analysis),
+      date_of_report_issue: formatDatabaseDate(data.date_of_report_issue),
+      comments: data.comments || null,
+      status: "draft" as const,
+    };
+
+    let savedCertificate;
+
+    if (data.id) {
+      // Update existing certificate
+      const { data: updatedCertificate, error: updateError } = await supabase
+        .from("certificates")
+        .update(certificateData)
+        .eq("id", data.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(`Failed to update certificate: ${updateError.message}`);
+      }
+
+      savedCertificate = updatedCertificate;
+    } else {
+      // Create new certificate
+      const { data: newCertificate, error: saveError } = await supabase
+        .from("certificates")
+        .insert([certificateData])
+        .select()
+        .single();
+
+      if (saveError) {
+        throw new Error(`Failed to save certificate: ${saveError.message}`);
+      }
+
+      savedCertificate = newCertificate;
+    }
+
+    if (!savedCertificate) {
+      throw new Error("Failed to save/update certificate");
+    }
+
+    // Save microbiological results
+    const resultsData = {
+      certificate_id: savedCertificate.id,
+      total_viable_counts_result: data.total_viable_counts_result || null,
+      total_viable_counts_remark: data.total_viable_counts_remark || null,
+      coliforms_mpn_result: data.coliforms_mpn_result || null,
+      coliforms_mpn_remark: data.coliforms_mpn_remark || null,
+      ecoli_mpn_result: data.ecoli_mpn_result || null,
+      ecoli_mpn_remark: data.ecoli_mpn_remark || null,
+      faecal_coliforms_mpn_result: data.faecal_coliforms_mpn_result || null,
+      faecal_coliforms_mpn_remark: data.faecal_coliforms_mpn_remark || null,
+    };
+
+    let resultsError;
+    if (data.id) {
+      // Update existing results
+      ({ error: resultsError } = await supabase
+        .from("microbiological_results")
+        .update(resultsData)
+        .eq("certificate_id", savedCertificate.id));
+    } else {
+      // Create new results
+      ({ error: resultsError } = await supabase
+        .from("microbiological_results")
+        .insert([resultsData]));
+    }
+
+    if (resultsError) {
+      // If results save/update fails and this was a new certificate, delete it
+      if (!data.id) {
+        await supabase
+          .from("certificates")
+          .delete()
+          .eq("id", savedCertificate.id);
+      }
+      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+    }
+
+    return {
+      error: null,
+      data: savedCertificate,
+    };
+  } catch (error) {
+    console.error("Error in submitMicrobiologicalForm:", error);
+    return {
+      error: "An unexpected error occurred. Please try again.",
+      data: null,
+    };
+  }
+}
+
+export async function submitBoreholeForm(data: FormValues) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: "Unauthorized. Please sign in to create certificates.",
+        data: null,
+      };
+    }
+
+    // Format dates for database (YYYY-MM-DD)
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
+
+    // Prepare base certificate data
+    const certificateData = {
+      certificate_id: data.certificate_id,
+      sample_id: data.sample_id || null,
+      certificate_type: "borehole",
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
+      date_of_report: formatDatabaseDate(data.date_of_report),
+      date_of_sampling: formatDatabaseDate(data.date_of_sampling),
+      date_sample_received: formatDatabaseDate(data.date_sample_received),
+      date_of_analysis: formatDatabaseDate(data.date_of_analysis),
+      date_of_report_issue: formatDatabaseDate(data.date_of_report_issue),
+      comments: data.comments || null,
+      status: "draft" as const,
+    };
+
+    let savedCertificate;
+
+    if (data.id) {
+      // First get the certificate_id from borehole_results
+      const { data: boreholeResult, error: boreholeError } = await supabase
+        .from("borehole_results")
+        .select("certificate_id")
+        .eq("id", data.id)
+        .single();
+
+      if (boreholeError || !boreholeResult) {
+        console.error("Error fetching borehole result:", boreholeError);
+        throw new Error(
+          `Failed to fetch borehole result: ${boreholeError?.message}`
+        );
+      }
+
+      // Now update the certificate using the certificate_id from borehole_results
+      const { data: updatedCertificate, error: updateError } = await supabase
+        .from("certificates")
+        .update(certificateData)
+        .eq("id", boreholeResult.certificate_id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Error updating certificate:", updateError);
+        throw new Error(`Failed to update certificate: ${updateError.message}`);
+      }
+
+      savedCertificate = updatedCertificate;
+
+      // Update borehole results
+      const resultsData = {
+        // Physical Tests
+        borehole_ph_result: data.borehole_ph_result || null,
+        borehole_ph_remark: data.borehole_ph_remark || null,
+        borehole_turbidity_result: data.borehole_turbidity_result || null,
+        borehole_turbidity_remark: data.borehole_turbidity_remark || null,
+        borehole_color_result: data.borehole_color_result || null,
+        borehole_color_remark: data.borehole_color_remark || null,
+        borehole_tss_result: data.borehole_tss_result || null,
+        borehole_tss_remark: data.borehole_tss_remark || null,
+        borehole_tds_result: data.borehole_tds_result || null,
+        borehole_tds_remark: data.borehole_tds_remark || null,
+        borehole_conductivity_result: data.borehole_conductivity_result || null,
+        borehole_conductivity_remark: data.borehole_conductivity_remark || null,
+        // Chemical Tests (Anions)
+        borehole_fluoride_result: data.borehole_fluoride_result || null,
+        borehole_fluoride_remark: data.borehole_fluoride_remark || null,
+        // Chemical Tests (Cations)
+        borehole_calcium_result: data.borehole_calcium_result || null,
+        borehole_calcium_remark: data.borehole_calcium_remark || null,
+        borehole_magnesium_result: data.borehole_magnesium_result || null,
+        borehole_magnesium_remark: data.borehole_magnesium_remark || null,
+        borehole_iron_result: data.borehole_iron_result || null,
+        borehole_iron_remark: data.borehole_iron_remark || null,
+        borehole_manganese_result: data.borehole_manganese_result || null,
+        borehole_manganese_remark: data.borehole_manganese_remark || null,
+        // Other Parameters
+        borehole_total_hardness_result:
+          data.borehole_total_hardness_result || null,
+        borehole_total_hardness_remark:
+          data.borehole_total_hardness_remark || null,
+        borehole_calcium_hardness_result:
+          data.borehole_calcium_hardness_result || null,
+        borehole_calcium_hardness_remark:
+          data.borehole_calcium_hardness_remark || null,
+        borehole_magnesium_hardness_result:
+          data.borehole_magnesium_hardness_result || null,
+        borehole_magnesium_hardness_remark:
+          data.borehole_magnesium_hardness_remark || null,
+      };
+
+      const { error: resultsError } = await supabase
+        .from("borehole_results")
+        .update(resultsData)
+        .eq("id", data.id);
+
+      if (resultsError) {
+        throw new Error(`Failed to update results: ${resultsError.message}`);
+      }
+    } else {
+      // Create new certificate
+      const { data: newCertificate, error: saveError } = await supabase
+        .from("certificates")
+        .insert([certificateData])
+        .select()
+        .single();
+
+      if (saveError) {
+        throw new Error(`Failed to save certificate: ${saveError.message}`);
+      }
+
+      savedCertificate = newCertificate;
+
+      // Create new borehole results
+      const resultsData = {
+        certificate_id: savedCertificate.id,
+        // Physical Tests
+        borehole_ph_result: data.borehole_ph_result || null,
+        borehole_ph_remark: data.borehole_ph_remark || null,
+        borehole_turbidity_result: data.borehole_turbidity_result || null,
+        borehole_turbidity_remark: data.borehole_turbidity_remark || null,
+        borehole_color_result: data.borehole_color_result || null,
+        borehole_color_remark: data.borehole_color_remark || null,
+        borehole_tss_result: data.borehole_tss_result || null,
+        borehole_tss_remark: data.borehole_tss_remark || null,
+        borehole_tds_result: data.borehole_tds_result || null,
+        borehole_tds_remark: data.borehole_tds_remark || null,
+        borehole_conductivity_result: data.borehole_conductivity_result || null,
+        borehole_conductivity_remark: data.borehole_conductivity_remark || null,
+        // Chemical Tests (Anions)
+        borehole_fluoride_result: data.borehole_fluoride_result || null,
+        borehole_fluoride_remark: data.borehole_fluoride_remark || null,
+        // Chemical Tests (Cations)
+        borehole_calcium_result: data.borehole_calcium_result || null,
+        borehole_calcium_remark: data.borehole_calcium_remark || null,
+        borehole_magnesium_result: data.borehole_magnesium_result || null,
+        borehole_magnesium_remark: data.borehole_magnesium_remark || null,
+        borehole_iron_result: data.borehole_iron_result || null,
+        borehole_iron_remark: data.borehole_iron_remark || null,
+        borehole_manganese_result: data.borehole_manganese_result || null,
+        borehole_manganese_remark: data.borehole_manganese_remark || null,
+        // Other Parameters
+        borehole_total_hardness_result:
+          data.borehole_total_hardness_result || null,
+        borehole_total_hardness_remark:
+          data.borehole_total_hardness_remark || null,
+        borehole_calcium_hardness_result:
+          data.borehole_calcium_hardness_result || null,
+        borehole_calcium_hardness_remark:
+          data.borehole_calcium_hardness_remark || null,
+        borehole_magnesium_hardness_result:
+          data.borehole_magnesium_hardness_result || null,
+        borehole_magnesium_hardness_remark:
+          data.borehole_magnesium_hardness_remark || null,
+      };
+
+      const { error: resultsError } = await supabase
+        .from("borehole_results")
+        .insert([resultsData]);
+
+      if (resultsError) {
+        // If results save fails, delete the certificate
+        await supabase
+          .from("certificates")
+          .delete()
+          .eq("id", savedCertificate.id);
+        throw new Error(`Failed to save results: ${resultsError.message}`);
+      }
+    }
+
+    return {
+      error: null,
+      data: savedCertificate,
+    };
+  } catch (error) {
+    console.error("Error in submitBoreholeForm:", error);
+    return {
+      error: "An unexpected error occurred. Please try again.",
+      data: null,
+    };
+  }
+}
+
+export async function submitEffluentForm(data: FormValues) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: "Unauthorized. Please sign in to create certificates.",
+        data: null,
+      };
+    }
+
+    // Format dates for database (YYYY-MM-DD)
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
+
+    // Prepare base certificate data
+    const certificateData = {
+      certificate_id: data.certificate_id,
+      sample_id: data.sample_id || null,
+      certificate_type: "effluent",
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
+      date_of_report: formatDatabaseDate(data.date_of_report),
+      date_of_sampling: formatDatabaseDate(data.date_of_sampling),
+      date_sample_received: formatDatabaseDate(data.date_sample_received),
+      date_of_analysis: formatDatabaseDate(data.date_of_analysis),
+      date_of_report_issue: formatDatabaseDate(data.date_of_report_issue),
+      comments: data.comments || null,
+      status: "draft" as const,
+    };
+
+    let savedCertificate;
+
+    if (data.id) {
+      // First get the certificate_id and existing data from effluent_results
+      const { data: effluentResult, error: effluentError } = await supabase
+        .from("effluent_results")
+        .select("*, certificates(*)")
+        .eq("id", data.id)
+        .single();
+
+      if (effluentError || !effluentResult) {
+        console.error("Error fetching effluent result:", effluentError);
+        throw new Error(
+          `Failed to fetch effluent result: ${effluentError?.message}`
+        );
+      }
+
+      // Update existing certificate
+      const { data: updatedCertificate, error: updateError } = await supabase
+        .from("certificates")
+        .update(certificateData)
+        .eq("id", effluentResult.certificate_id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Error updating certificate:", updateError);
+        throw new Error(`Failed to update certificate: ${updateError.message}`);
+      }
+
+      savedCertificate = updatedCertificate;
+    } else {
+      // Create new certificate
+      const { data: newCertificate, error: saveError } = await supabase
+        .from("certificates")
+        .insert([certificateData])
+        .select()
+        .single();
+
+      if (saveError || !newCertificate) {
+        throw new Error(`Failed to save certificate: ${saveError?.message}`);
+      }
+
+      savedCertificate = newCertificate;
+    }
+
+    // Prepare results data
+    const resultsData = {
+      certificate_id: savedCertificate.id,
+      // Physical Parameters
+      effluent_ph_result: data.effluent_ph_result || null,
+      effluent_ph_remark: data.effluent_ph_remark || null,
+      effluent_temperature_result: data.effluent_temperature_result || null,
+      effluent_temperature_remark: data.effluent_temperature_remark || null,
+      effluent_tss_result: data.effluent_tss_result || null,
+      effluent_tss_remark: data.effluent_tss_remark || null,
+      effluent_tds_result: data.effluent_tds_result || null,
+      effluent_tds_remark: data.effluent_tds_remark || null,
+      effluent_color_result: data.effluent_color_result || null,
+      effluent_color_remark: data.effluent_color_remark || null,
+      // Chemical Parameters
+      effluent_bod_result: data.effluent_bod_result || null,
+      effluent_bod_remark: data.effluent_bod_remark || null,
+      effluent_cod_result: data.effluent_cod_result || null,
+      effluent_cod_remark: data.effluent_cod_remark || null,
+      effluent_total_nitrogen_result:
+        data.effluent_total_nitrogen_result || null,
+      effluent_total_nitrogen_remark:
+        data.effluent_total_nitrogen_remark || null,
+      effluent_total_phosphorus_result:
+        data.effluent_total_phosphorus_result || null,
+      effluent_total_phosphorus_remark:
+        data.effluent_total_phosphorus_remark || null,
+      effluent_oil_grease_result: data.effluent_oil_grease_result || null,
+      effluent_oil_grease_remark: data.effluent_oil_grease_remark || null,
+      effluent_detergents_result: data.effluent_detergents_result || null,
+      effluent_detergents_remark: data.effluent_detergents_remark || null,
+      effluent_chloride_result: data.effluent_chloride_result || null,
+      effluent_chloride_remark: data.effluent_chloride_remark || null,
+      effluent_fluoride_result: data.effluent_fluoride_result || null,
+      effluent_fluoride_remark: data.effluent_fluoride_remark || null,
+      effluent_sulphide_result: data.effluent_sulphide_result || null,
+      effluent_sulphide_remark: data.effluent_sulphide_remark || null,
+      effluent_phenols_result: data.effluent_phenols_result || null,
+      effluent_phenols_remark: data.effluent_phenols_remark || null,
+      effluent_hexane_veg_result: data.effluent_hexane_veg_result || null,
+      effluent_hexane_veg_remark: data.effluent_hexane_veg_remark || null,
+      effluent_hexane_mineral_result:
+        data.effluent_hexane_mineral_result || null,
+      effluent_hexane_mineral_remark:
+        data.effluent_hexane_mineral_remark || null,
+      // Heavy Metals
+      effluent_arsenic_result: data.effluent_arsenic_result || null,
+      effluent_arsenic_remark: data.effluent_arsenic_remark || null,
+      effluent_boron_result: data.effluent_boron_result || null,
+      effluent_boron_remark: data.effluent_boron_remark || null,
+      effluent_cadmium_result: data.effluent_cadmium_result || null,
+      effluent_cadmium_remark: data.effluent_cadmium_remark || null,
+      effluent_chromium_vi_result: data.effluent_chromium_vi_result || null,
+      effluent_chromium_vi_remark: data.effluent_chromium_vi_remark || null,
+      effluent_copper_result: data.effluent_copper_result || null,
+      effluent_copper_remark: data.effluent_copper_remark || null,
+      effluent_iron_result: data.effluent_iron_result || null,
+      effluent_iron_remark: data.effluent_iron_remark || null,
+      effluent_lead_result: data.effluent_lead_result || null,
+      effluent_lead_remark: data.effluent_lead_remark || null,
+      effluent_manganese_result: data.effluent_manganese_result || null,
+      effluent_manganese_remark: data.effluent_manganese_remark || null,
+      effluent_mercury_result: data.effluent_mercury_result || null,
+      effluent_mercury_remark: data.effluent_mercury_remark || null,
+      effluent_nickel_result: data.effluent_nickel_result || null,
+      effluent_nickel_remark: data.effluent_nickel_remark || null,
+      effluent_selenium_result: data.effluent_selenium_result || null,
+      effluent_selenium_remark: data.effluent_selenium_remark || null,
+      effluent_zinc_result: data.effluent_zinc_result || null,
+      effluent_zinc_remark: data.effluent_zinc_remark || null,
+      // Organic Compounds
+      effluent_111_trichloroethane_result:
+        data.effluent_111_trichloroethane_result || null,
+      effluent_111_trichloroethane_remark:
+        data.effluent_111_trichloroethane_remark || null,
+      effluent_112_trichloroethane_result:
+        data.effluent_112_trichloroethane_result || null,
+      effluent_112_trichloroethane_remark:
+        data.effluent_112_trichloroethane_remark || null,
+      effluent_11_dichloroethylene_result:
+        data.effluent_11_dichloroethylene_result || null,
+      effluent_11_dichloroethylene_remark:
+        data.effluent_11_dichloroethylene_remark || null,
+      effluent_12_dichloroethane_result:
+        data.effluent_12_dichloroethane_result || null,
+      effluent_12_dichloroethane_remark:
+        data.effluent_12_dichloroethane_remark || null,
+      effluent_13_dichloropropene_result:
+        data.effluent_13_dichloropropene_result || null,
+      effluent_13_dichloropropene_remark:
+        data.effluent_13_dichloropropene_remark || null,
+      effluent_benzene_result: data.effluent_benzene_result || null,
+      effluent_benzene_remark: data.effluent_benzene_remark || null,
+      effluent_carbon_tetrachloride_result:
+        data.effluent_carbon_tetrachloride_result || null,
+      effluent_carbon_tetrachloride_remark:
+        data.effluent_carbon_tetrachloride_remark || null,
+      effluent_cis_12_dichloroethylene_result:
+        data.effluent_cis_12_dichloroethylene_result || null,
+      effluent_cis_12_dichloroethylene_remark:
+        data.effluent_cis_12_dichloroethylene_remark || null,
+      effluent_dichloromethane_result:
+        data.effluent_dichloromethane_result || null,
+      effluent_dichloromethane_remark:
+        data.effluent_dichloromethane_remark || null,
+      effluent_simazine_result: data.effluent_simazine_result || null,
+      effluent_simazine_remark: data.effluent_simazine_remark || null,
+      effluent_tetrachloroethylene_result:
+        data.effluent_tetrachloroethylene_result || null,
+      effluent_tetrachloroethylene_remark:
+        data.effluent_tetrachloroethylene_remark || null,
+      effluent_thiobencarb_result: data.effluent_thiobencarb_result || null,
+      effluent_thiobencarb_remark: data.effluent_thiobencarb_remark || null,
+      effluent_thiram_result: data.effluent_thiram_result || null,
+      effluent_thiram_remark: data.effluent_thiram_remark || null,
+      effluent_trichloroethylene_result:
+        data.effluent_trichloroethylene_result || null,
+      effluent_trichloroethylene_remark:
+        data.effluent_trichloroethylene_remark || null,
+      // Microbiological Parameters
+      effluent_ecoli_result: data.effluent_ecoli_result || null,
+      effluent_ecoli_remark: data.effluent_ecoli_remark || null,
+      effluent_total_coliforms_result:
+        data.effluent_total_coliforms_result || null,
+      effluent_total_coliforms_remark:
+        data.effluent_total_coliforms_remark || null,
+    };
+
+    let resultsError;
+    if (data.id) {
+      // Update existing results
+      ({ error: resultsError } = await supabase
+        .from("effluent_results")
+        .update(resultsData)
+        .eq("id", data.id));
+    } else {
+      // Create new results
+      ({ error: resultsError } = await supabase
+        .from("effluent_results")
+        .insert([resultsData]));
+    }
+
+    if (resultsError) {
+      // If results save/update fails and this was a new certificate, delete it
+      if (!data.id) {
+        await supabase
+          .from("certificates")
+          .delete()
+          .eq("id", savedCertificate.id);
+      }
+      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+    }
+
+    return {
+      error: null,
+      data: savedCertificate,
+    };
+  } catch (error) {
+    console.error("Error in submitEffluentForm:", error);
+    return {
+      error: "An unexpected error occurred. Please try again.",
+      data: null,
+    };
+  }
+}
+
+export async function submitIrrigationForm(data: FormValues) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: "Unauthorized. Please sign in to create certificates.",
+        data: null,
+      };
+    }
+
+    // Format dates for database (YYYY-MM-DD)
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
+
+    // Prepare base certificate data
+    const certificateData = {
+      certificate_id: data.certificate_id,
+      sample_id: data.sample_id || null,
+      certificate_type: "irrigation",
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
+      date_of_report: formatDatabaseDate(data.date_of_report),
+      date_of_sampling: formatDatabaseDate(data.date_of_sampling),
+      date_sample_received: formatDatabaseDate(data.date_sample_received),
+      date_of_analysis: formatDatabaseDate(data.date_of_analysis),
+      date_of_report_issue: formatDatabaseDate(data.date_of_report_issue),
+      comments: data.comments || null,
+      status: "draft" as const,
+    };
+
+    // Save certificate to database
+    const { data: savedCertificate, error: saveError } = await supabase
+      .from("certificates")
+      .insert([certificateData])
+      .select()
+      .single();
+
+    if (saveError || !savedCertificate) {
+      throw new Error(`Failed to save certificate: ${saveError?.message}`);
+    }
+
+    // Save irrigation results
+    const resultsData = {
+      certificate_id: savedCertificate.id,
+      irrigation_ph_result: data.irrigation_ph_result || null,
+      irrigation_ph_remark: data.irrigation_ph_remark || null,
+      irrigation_aluminium_result: data.irrigation_aluminium_result || null,
+      irrigation_aluminium_remark: data.irrigation_aluminium_remark || null,
+      irrigation_arsenic_result: data.irrigation_arsenic_result || null,
+      irrigation_arsenic_remark: data.irrigation_arsenic_remark || null,
+      irrigation_boron_result: data.irrigation_boron_result || null,
+      irrigation_boron_remark: data.irrigation_boron_remark || null,
+      irrigation_cadmium_result: data.irrigation_cadmium_result || null,
+      irrigation_cadmium_remark: data.irrigation_cadmium_remark || null,
+      irrigation_chloride_result: data.irrigation_chloride_result || null,
+      irrigation_chloride_remark: data.irrigation_chloride_remark || null,
+      irrigation_chromium_result: data.irrigation_chromium_result || null,
+      irrigation_chromium_remark: data.irrigation_chromium_remark || null,
+      irrigation_cobalt_result: data.irrigation_cobalt_result || null,
+      irrigation_cobalt_remark: data.irrigation_cobalt_remark || null,
+      irrigation_copper_result: data.irrigation_copper_result || null,
+      irrigation_copper_remark: data.irrigation_copper_remark || null,
+      irrigation_ecoli_result: data.irrigation_ecoli_result || null,
+      irrigation_ecoli_remark: data.irrigation_ecoli_remark || null,
+      irrigation_fluoride_result: data.irrigation_fluoride_result || null,
+      irrigation_fluoride_remark: data.irrigation_fluoride_remark || null,
+      irrigation_iron_result: data.irrigation_iron_result || null,
+      irrigation_iron_remark: data.irrigation_iron_remark || null,
+      irrigation_selenium_result: data.irrigation_selenium_result || null,
+      irrigation_selenium_remark: data.irrigation_selenium_remark || null,
+      irrigation_sar_result: data.irrigation_sar_result || null,
+      irrigation_sar_remark: data.irrigation_sar_remark || null,
+      irrigation_tds_result: data.irrigation_tds_result || null,
+      irrigation_tds_remark: data.irrigation_tds_remark || null,
+      irrigation_zinc_result: data.irrigation_zinc_result || null,
+      irrigation_zinc_remark: data.irrigation_zinc_remark || null,
+    };
+
+    const { error: resultsError } = await supabase
+      .from("irrigation_results")
+      .insert([resultsData]);
+
+    if (resultsError) {
+      // If results save fails, delete the certificate
+      await supabase
+        .from("certificates")
+        .delete()
+        .eq("id", savedCertificate.id);
+
+      throw new Error(`Failed to save results: ${resultsError.message}`);
+    }
+
+    return {
+      error: null,
+      data: savedCertificate,
+    };
+  } catch (error) {
+    console.error("Error in submitIrrigationForm:", error);
+    return {
+      error: "An unexpected error occurred. Please try again.",
+      data: null,
+    };
+  }
+}
+
+export async function submitPhysicalChemicalForm(data: FormValues) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: "Unauthorized. Please sign in to create certificates.",
+        data: null,
+      };
+    }
+
+    // Format dates for database (YYYY-MM-DD)
+    const formatDatabaseDate = (dateStr: string | undefined) => {
+      if (!dateStr) return null;
+      try {
+        return format(parseISO(dateStr), "yyyy-MM-dd");
+      } catch (error) {
+        console.error("Error formatting date:", error);
+        return null;
+      }
+    };
+
+    // Prepare base certificate data
+    const certificateData = {
+      certificate_id: data.certificate_id,
+      sample_id: data.sample_id || null,
+      certificate_type: "physical_chemical",
+      description_of_sample: data.description_of_sample || null,
+      sample_source: data.sample_source || null,
+      submitted_by: data.submitted_by || null,
+      customer_contact: data.customer_contact || null,
+      sampled_by: data.sampled_by || null,
+      date_of_report: formatDatabaseDate(data.date_of_report),
+      date_of_sampling: formatDatabaseDate(data.date_of_sampling),
+      date_sample_received: formatDatabaseDate(data.date_sample_received),
+      date_of_analysis: formatDatabaseDate(data.date_of_analysis),
+      date_of_report_issue: formatDatabaseDate(data.date_of_report_issue),
+      comments: data.comments || null,
+      status: "draft" as const,
+    };
+
+    let savedCertificate;
+
+    if (data.id) {
+      // Update existing certificate
+      const { data: updatedCertificate, error: updateError } = await supabase
+        .from("certificates")
+        .update(certificateData)
+        .eq("id", data.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(`Failed to update certificate: ${updateError.message}`);
+      }
+
+      savedCertificate = updatedCertificate;
+    } else {
+      // Create new certificate
+      const { data: newCertificate, error: saveError } = await supabase
+        .from("certificates")
+        .insert([certificateData])
+        .select()
+        .single();
+
+      if (saveError) {
+        throw new Error(`Failed to save certificate: ${saveError.message}`);
+      }
+
+      savedCertificate = newCertificate;
+    }
+
+    if (!savedCertificate) {
+      throw new Error("Failed to save/update certificate");
+    }
+
+    // Prepare physical chemical results data
+    const resultsData = {
+      certificate_id: savedCertificate.id,
+      // Physical Tests
+      ph_result: data.ph_result || null,
+      ph_remark: data.ph_remark || null,
+      turbidity_result: data.turbidity_result || null,
+      turbidity_remark: data.turbidity_remark || null,
+      color_result: data.color_result || null,
+      color_remark: data.color_remark || null,
+      tss_result: data.tss_result || null,
+      tss_remark: data.tss_remark || null,
+      tds_result: data.tds_result || null,
+      tds_remark: data.tds_remark || null,
+      conductivity_result: data.conductivity_result || null,
+      conductivity_remark: data.conductivity_remark || null,
+      // Chemical Tests (Anions)
+      ph_alkalinity_result: data.ph_alkalinity_result || null,
+      ph_alkalinity_remark: data.ph_alkalinity_remark || null,
+      total_alkalinity_result: data.total_alkalinity_result || null,
+      total_alkalinity_remark: data.total_alkalinity_remark || null,
+      chloride_result: data.chloride_result || null,
+      chloride_remark: data.chloride_remark || null,
+      fluoride_result: data.fluoride_result || null,
+      fluoride_remark: data.fluoride_remark || null,
+      sulfate_result: data.sulfate_result || null,
+      sulfate_remark: data.sulfate_remark || null,
+      nitrate_result: data.nitrate_result || null,
+      nitrate_remark: data.nitrate_remark || null,
+      nitrite_result: data.nitrite_result || null,
+      nitrite_remark: data.nitrite_remark || null,
+      phosphate_result: data.phosphate_result || null,
+      phosphate_remark: data.phosphate_remark || null,
+      sulfide_result: data.sulfide_result || null,
+      sulfide_remark: data.sulfide_remark || null,
+      // Chemical Tests (Cations)
+      potassium_result: data.potassium_result || null,
+      potassium_remark: data.potassium_remark || null,
+      sodium_result: data.sodium_result || null,
+      sodium_remark: data.sodium_remark || null,
+      calcium_result: data.calcium_result || null,
+      calcium_remark: data.calcium_remark || null,
+      magnesium_result: data.magnesium_result || null,
+      magnesium_remark: data.magnesium_remark || null,
+      iron_result: data.iron_result || null,
+      iron_remark: data.iron_remark || null,
+      manganese_result: data.manganese_result || null,
+      manganese_remark: data.manganese_remark || null,
+      ammonia_result: data.ammonia_result || null,
+      ammonia_remark: data.ammonia_remark || null,
+      copper_result: data.copper_result || null,
+      copper_remark: data.copper_remark || null,
+      zinc_result: data.zinc_result || null,
+      zinc_remark: data.zinc_remark || null,
+      chromium_result: data.chromium_result || null,
+      chromium_remark: data.chromium_remark || null,
+      // Other Parameters
+      total_hardness_result: data.total_hardness_result || null,
+      total_hardness_remark: data.total_hardness_remark || null,
+      calcium_hardness_result: data.calcium_hardness_result || null,
+      calcium_hardness_remark: data.calcium_hardness_remark || null,
+      magnesium_hardness_result: data.magnesium_hardness_result || null,
+      magnesium_hardness_remark: data.magnesium_hardness_remark || null,
+      silica_result: data.silica_result || null,
+      silica_remark: data.silica_remark || null,
+      free_chlorine_result: data.free_chlorine_result || null,
+      free_chlorine_remark: data.free_chlorine_remark || null,
+    };
+
+    let resultsError;
+    if (data.id) {
+      // Update existing results
+      ({ error: resultsError } = await supabase
+        .from("physical_chemical_results")
+        .update(resultsData)
+        .eq("certificate_id", savedCertificate.id));
+    } else {
+      // Create new results
+      ({ error: resultsError } = await supabase
+        .from("physical_chemical_results")
+        .insert([resultsData]));
+    }
+
+    if (resultsError) {
+      // If results save/update fails and this was a new certificate, delete it
+      if (!data.id) {
+        await supabase
+          .from("certificates")
+          .delete()
+          .eq("id", savedCertificate.id);
+      }
+      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+    }
+
+    return {
+      error: null,
+      data: savedCertificate,
+    };
+  } catch (error) {
+    console.error("Error in submitPhysicalChemicalForm:", error);
     return {
       error: "An unexpected error occurred. Please try again.",
       data: null,

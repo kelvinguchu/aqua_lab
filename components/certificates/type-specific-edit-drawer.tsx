@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { Certificate } from "@/lib/supabase";
 import { useForm, FormProvider } from "react-hook-form";
 import { FormValues } from "@/components/certificates/form/types";
+import { supabase } from "@/lib/supabase";
 
 // Lazy load form components with named exports
 const PhysicalChemicalForm = lazy(() =>
@@ -71,18 +72,70 @@ const formTitles = {
   borehole: "Borehole Certificate",
 };
 
+const resultsTableMap = {
+  physical_chemical: "physical_chemical_results",
+  microbiological: "microbiological_results",
+  effluent: "effluent_results",
+  irrigation: "irrigation_results",
+  borehole: "borehole_results",
+};
+
 export function TypeSpecificEditDrawer({
   open,
   onOpenChange,
   type,
   certificate,
 }: TypeSpecificEditDrawerProps) {
+  const [formData, setFormData] = useState<FormValues | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const form = useForm<FormValues>();
+
+  useEffect(() => {
+    async function loadFormData() {
+      if (!certificate) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        // Fetch the results for this certificate
+        const { data: results, error } = await supabase
+          .from(resultsTableMap[type])
+          .select("*")
+          .eq("certificate_id", certificate.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching results:", error);
+          return;
+        }
+
+        // Merge certificate and results data
+        const mergedData = {
+          ...certificate,
+          ...results,
+        };
+
+        // Reset form with merged data
+        form.reset(mergedData);
+        setFormData(mergedData);
+      } catch (error) {
+        console.error("Error loading form data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (open && certificate) {
+      loadFormData();
+    }
+  }, [open, certificate, type, form]);
+
   if (!certificate) return null;
 
   const FormComponent = formComponents[type];
-  const form = useForm<FormValues>({
-    defaultValues: certificate,
-  });
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -99,20 +152,26 @@ export function TypeSpecificEditDrawer({
           </div>
         </DrawerHeader>
         <div className='overflow-y-auto px-4'>
-          <Suspense
-            fallback={
-              <div className='flex items-center justify-center py-8'>
-                <LoadingSpinner />
-              </div>
-            }>
-            <FormProvider {...form}>
-              <FormComponent
-                form={form}
-                certificate={certificate}
-                onSuccess={() => onOpenChange(false)}
-              />
-            </FormProvider>
-          </Suspense>
+          {isLoading ? (
+            <div className='flex items-center justify-center py-8'>
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <Suspense
+              fallback={
+                <div className='flex items-center justify-center py-8'>
+                  <LoadingSpinner />
+                </div>
+              }>
+              <FormProvider {...form}>
+                <FormComponent
+                  form={form}
+                  certificate={certificate}
+                  onSuccess={() => onOpenChange(false)}
+                />
+              </FormProvider>
+            </Suspense>
+          )}
         </div>
       </DrawerContent>
     </Drawer>

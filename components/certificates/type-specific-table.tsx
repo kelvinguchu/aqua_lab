@@ -2,7 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Plus, MoreHorizontal } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  FileSpreadsheet,
+  Search,
+  Filter,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,6 +30,7 @@ import type { Certificate } from "@/lib/supabase";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { TypeSpecificEditDrawer } from "./type-specific-edit-drawer";
+import { cn } from "@/lib/utils";
 
 interface TypeSpecificTableProps {
   certificates: Certificate[];
@@ -121,17 +128,47 @@ export function TypeSpecificTable({
     }
   };
 
+  // Empty state component
+  const EmptyState = () => (
+    <div className='flex flex-col items-center justify-center py-12 text-center'>
+      <FileSpreadsheet className='h-16 w-16 text-gray-400 mb-4' />
+      <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+        No Certificates Found
+      </h3>
+      <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm'>
+        {searchQuery
+          ? "No certificates match your search criteria. Try adjusting your search."
+          : `Get started by creating your first ${type.replace(
+              "_",
+              " "
+            )} certificate.`}
+      </p>
+      <Button
+        onClick={onNew}
+        className='relative overflow-hidden group bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-200'>
+        <Plus className='mr-2 h-4 w-4' />
+        Create Certificate
+      </Button>
+    </div>
+  );
+
   return (
     <>
       <div className='space-y-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center space-x-2 w-full max-w-sm'>
-            <Input
-              placeholder='Search certificates...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className='h-9'
-            />
+        <div className='flex items-center justify-between gap-4'>
+          <div className='flex items-center flex-1 max-w-sm space-x-2'>
+            <div className='relative flex-1'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-500' />
+              <Input
+                placeholder='Search certificates...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='pl-8 h-9'
+              />
+            </div>
+            <Button variant='outline' size='icon' className='h-9 w-9'>
+              <Filter className='h-4 w-4' />
+            </Button>
           </div>
           <Button
             onClick={onNew}
@@ -147,51 +184,70 @@ export function TypeSpecificTable({
           </Button>
         </div>
 
-        <div className='rounded-md border'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Certificate ID</TableHead>
-                <TableHead>Sample ID</TableHead>
-                <TableHead>Sample Source</TableHead>
-                <TableHead>Date of Analysis</TableHead>
-                <TableHead className='text-right'>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCertificates.map((cert) => (
-                <TableRow key={cert.id}>
-                  <TableCell>{cert.certificate_id}</TableCell>
-                  <TableCell>{cert.sample_id}</TableCell>
-                  <TableCell>{cert.sample_source}</TableCell>
-                  <TableCell>
-                    {format(new Date(cert.date_of_analysis), "dd/MM/yyyy")}
-                  </TableCell>
-                  <TableCell className='text-right'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' className='h-8 w-8 p-0'>
-                          <span className='sr-only'>Open menu</span>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => setEditingCertificate(cert)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => generatePDF(cert)}>
-                          Generate Report
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        {filteredCertificates.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className='rounded-lg border bg-card'>
+            <Table>
+              <TableHeader>
+                <TableRow className='bg-muted/50'>
+                  <TableHead className='font-semibold'>
+                    Certificate ID
+                  </TableHead>
+                  <TableHead className='font-semibold'>Sample ID</TableHead>
+                  <TableHead className='font-semibold'>Sample Source</TableHead>
+                  <TableHead className='font-semibold'>
+                    Date of Analysis
+                  </TableHead>
+                  <TableHead className='text-right font-semibold'>
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredCertificates.map((cert) => (
+                  <TableRow
+                    key={cert.id}
+                    className='hover:bg-muted/50 transition-colors'>
+                    <TableCell className='font-medium'>
+                      {cert.certificate_id}
+                    </TableCell>
+                    <TableCell>{cert.sample_id}</TableCell>
+                    <TableCell>{cert.sample_source}</TableCell>
+                    <TableCell>
+                      {format(new Date(cert.date_of_analysis), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            className='h-8 w-8 p-0 hover:bg-muted'>
+                            <span className='sr-only'>Open menu</span>
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' className='w-[160px]'>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => setEditingCertificate(cert)}
+                            className='cursor-pointer'>
+                            Edit certificate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => generatePDF(cert)}
+                            className='cursor-pointer'>
+                            Generate report
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
       <TypeSpecificEditDrawer

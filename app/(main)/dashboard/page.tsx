@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TypeSpecificTable } from "@/components/certificates/type-specific-table";
@@ -44,28 +44,39 @@ const fetchCertificates = async (
   return data || [];
 };
 
+const certificateTypes: CertificateType[] = [
+  "physical_chemical",
+  "microbiological",
+  "effluent",
+  "irrigation",
+  "borehole",
+];
+
 export default function Dashboard() {
   const router = useRouter();
   const [selectedType, setSelectedType] =
     useState<CertificateType>("physical_chemical");
   const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false);
 
-  // React Query for caching and automatic revalidation
-  const {
-    data: certificates = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<Certificate[]>({
-    queryKey: ["certificates", selectedType],
-    queryFn: () => fetchCertificates(selectedType),
-    staleTime: 1000 * 60 * 5, // Data fresh for 5 minutes
-    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnReconnect: true, // Refetch when internet reconnects
-    retry: 3, // Retry failed requests 3 times
+  // Use useQueries to fetch data for all certificate types simultaneously
+  const queries = useQueries({
+    queries: certificateTypes.map((type) => ({
+      queryKey: ["certificates", type],
+      queryFn: () => fetchCertificates(type),
+      staleTime: 1000 * 60 * 5, // Data fresh for 5 minutes
+      gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      retry: 3,
+    })),
   });
+
+  // Check if any query is loading
+  const isLoading = queries.some((query) => query.isLoading);
+
+  // Check if any query has an error
+  const hasError = queries.some((query) => query.isError);
+  const firstError = queries.find((query) => query.error)?.error;
 
   if (isLoading) {
     return (
@@ -75,20 +86,26 @@ export default function Dashboard() {
     );
   }
 
-  if (isError) {
+  if (hasError) {
     return (
       <div className='container mx-auto px-4 sm:px-6 lg:px-8 pt-24'>
         <Alert variant='destructive' className='mb-6'>
           <AlertCircle className='h-4 w-4' />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {error?.message || "Failed to load certificates"}
+            {firstError?.message || "Failed to load certificates"}
           </AlertDescription>
         </Alert>
-        <Button onClick={() => refetch()}>Try Again</Button>
+        <Button onClick={() => queries.forEach((query) => query.refetch())}>
+          Try Again
+        </Button>
       </div>
     );
   }
+
+  // Get the certificates for the selected type
+  const selectedTypeIndex = certificateTypes.indexOf(selectedType);
+  const certificates = queries[selectedTypeIndex].data || [];
 
   return (
     <main className='container mx-auto px-4 sm:px-6 lg:px-8 pt-24'>
@@ -96,6 +113,7 @@ export default function Dashboard() {
         <CardContent className='pt-6'>
           <Tabs
             defaultValue='physical_chemical'
+            value={selectedType}
             onValueChange={(value) =>
               setSelectedType(value as CertificateType)
             }>
