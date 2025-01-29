@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
   const handleLogin = async (formData: FormData) => {
@@ -63,43 +62,7 @@ export default async function LoginPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <form action={handleLogin} className='space-y-4'>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='email'
-                  className='text-sm font-medium text-gray-700'>
-                  Email
-                </label>
-                <Input
-                  id='email'
-                  name='email'
-                  type='email'
-                  placeholder='Enter your email'
-                  className='bg-white/70 border-gray-200'
-                  required
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='password'
-                  className='text-sm font-medium text-gray-700'>
-                  Password
-                </label>
-                <Input
-                  id='password'
-                  name='password'
-                  type='password'
-                  placeholder='Enter your password'
-                  className='bg-white/70 border-gray-200'
-                  required
-                />
-              </div>
-              <Button
-                className='w-full bg-[#0086CB] hover:bg-[#005A88] text-white transition-colors'
-                type='submit'>
-                Sign in
-              </Button>
-            </form>
+            <LoginForm handleLogin={handleLogin} />
           </CardContent>
           <CardFooter className='flex flex-col space-y-4'>
             <div className='text-sm text-gray-600 text-center'>
