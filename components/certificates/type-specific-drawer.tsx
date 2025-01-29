@@ -102,6 +102,7 @@ export function TypeSpecificDrawer({
               <FormComponent
                 form={form}
                 onSuccess={() => onOpenChange(false)}
+                mode='create'
               />
             </FormProvider>
           </Suspense>

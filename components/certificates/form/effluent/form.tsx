@@ -19,12 +19,14 @@ interface EffluentFormProps {
   form: UseFormReturn<FormValues>;
   onSuccess?: () => void;
   certificate?: Certificate;
+  mode: "create" | "edit";
 }
 
 export function EffluentForm({
   form,
   onSuccess,
   certificate,
+  mode,
 }: EffluentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
@@ -43,12 +45,15 @@ export function EffluentForm({
     try {
       setIsSubmitting(true);
 
-      // Use the pre-generated ID or generate a new one if somehow missing
-      const certificate_id =
-        generatedId || (await generateCertificateId("effluent"));
+      // For updates, use the existing certificate ID
+      // For new certificates, use the generated ID or generate a new one
+      const certificate_id = certificate
+        ? certificate.certificate_id
+        : generatedId || (await generateCertificateId("effluent"));
 
       const result = await submitEffluentForm({
         ...values,
+        id: certificate?.id, // Make sure to pass the UUID for updates
         certificate_id,
         certificate_type: "effluent",
       });
@@ -92,7 +97,12 @@ export function EffluentForm({
       <HeavyMetals form={form} />
       <OrganicCompounds form={form} />
       <MicrobiologicalParameters form={form} />
-      <FormFooter form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} />
+      <FormFooter
+        form={form}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+        mode={mode}
+      />
     </div>
   );
 }

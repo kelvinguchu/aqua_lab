@@ -18,12 +18,14 @@ interface PhysicalChemicalFormProps {
   form: UseFormReturn<FormValues>;
   onSuccess?: () => void;
   certificate?: Certificate;
+  mode: "create" | "edit";
 }
 
 export function PhysicalChemicalForm({
   form,
   onSuccess,
   certificate,
+  mode,
 }: PhysicalChemicalFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
@@ -42,16 +44,17 @@ export function PhysicalChemicalForm({
     try {
       setIsSubmitting(true);
 
-      // Get the certificate_id from form values, fallback to generating a new one if somehow missing
-      const certificate_id =
-        values.certificate_id ||
-        (await generateCertificateId("physical_chemical"));
+      // For updates, use the existing certificate ID
+      // For new certificates, use the generated ID or generate a new one
+      const certificate_id = certificate
+        ? certificate.certificate_id
+        : generatedId || (await generateCertificateId("physical_chemical"));
 
       const result = await submitPhysicalChemicalForm({
         ...values,
+        id: certificate?.id, // Make sure to pass the UUID for updates
         certificate_id,
         certificate_type: "physical_chemical",
-        id: certificate?.id,
       });
 
       if (result.error) {
@@ -92,7 +95,12 @@ export function PhysicalChemicalForm({
       <ChemicalAnions form={form} />
       <ChemicalCations form={form} />
       <OtherParameters form={form} />
-      <FormFooter form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} />
+      <FormFooter
+        form={form}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+        mode={mode}
+      />
     </div>
   );
 }

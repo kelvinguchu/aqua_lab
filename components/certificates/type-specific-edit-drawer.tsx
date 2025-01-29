@@ -168,6 +168,7 @@ export function TypeSpecificEditDrawer({
                   form={form}
                   certificate={certificate}
                   onSuccess={() => onOpenChange(false)}
+                  mode='edit'
                 />
               </FormProvider>
             </Suspense>

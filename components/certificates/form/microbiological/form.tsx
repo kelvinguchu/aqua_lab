@@ -16,12 +16,14 @@ interface MicrobiologicalFormProps {
   form: UseFormReturn<FormValues>;
   onSuccess?: () => void;
   certificate?: Certificate;
+  mode: "create" | "edit";
 }
 
 export function MicrobiologicalForm({
   form,
   onSuccess,
   certificate,
+  mode,
 }: MicrobiologicalFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
@@ -31,43 +33,26 @@ export function MicrobiologicalForm({
     // Generate certificate ID when component mounts
     if (!certificate) {
       generateCertificateId("microbiological")
-        .then((id) => {
-          setGeneratedId(id);
-          // Set the certificate ID in the form data
-          form.setValue("certificate_id", id);
-          form.setValue("certificate_type", "microbiological");
-        })
-        .catch((error) => {
-          console.error("Error generating certificate ID:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to generate certificate ID. Please try again.",
-          });
-        });
-    } else {
-      // If editing an existing certificate, set its ID
-      form.setValue("certificate_id", certificate.certificate_id);
-      form.setValue("certificate_type", "microbiological");
+        .then(setGeneratedId)
+        .catch(console.error);
     }
-  }, [certificate, form, toast]);
+  }, [certificate]);
 
   const onSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
 
-      // Ensure certificate ID is present
-      const certificateId = form.getValues("certificate_id");
-      if (!certificateId) {
-        throw new Error("Certificate ID is required");
-      }
+      // For updates, use the existing certificate ID
+      // For new certificates, use the generated ID or generate a new one
+      const certificate_id = certificate
+        ? certificate.certificate_id
+        : generatedId || (await generateCertificateId("microbiological"));
 
-      // Ensure all required fields are present
       const result = await submitMicrobiologicalForm({
         ...values,
-        certificate_id: certificateId,
+        id: certificate?.id, // Make sure to pass the UUID for updates
+        certificate_id,
         certificate_type: "microbiological",
-        id: certificate?.id,
       });
 
       if (result.error) {
@@ -105,7 +90,12 @@ export function MicrobiologicalForm({
         certificateId={generatedId}
       />
       <MicrobiologicalTests form={form} />
-      <FormFooter form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} />
+      <FormFooter
+        form={form}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+        mode={mode}
+      />
     </div>
   );
 }

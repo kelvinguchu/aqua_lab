@@ -4,14 +4,22 @@ import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkUserAuthorization,
-  prepareCertificateData,
   handleError,
   CertificateResponse,
+  updateCertificate,
+  createCertificate,
+  updateResults,
+  createResults,
 } from "./base";
+import type { Database } from "@/lib/database.types";
+
+type IrrigationResults =
+  Database["public"]["Tables"]["irrigation_results"]["Row"];
 
 export async function submitIrrigationForm(
   data: FormValues
 ): Promise<CertificateResponse> {
+
   try {
     const supabase = await createClient();
 
@@ -29,82 +37,14 @@ export async function submitIrrigationForm(
       };
     }
 
-    const certificateData = await prepareCertificateData(data, "irrigation");
-
-    // Validate the prepared data
-    if (!certificateData || !certificateData.certificate_id) {
-      console.error(
-        "Invalid certificate data after preparation:",
-        certificateData
-      );
-      return {
-        error: "Failed to prepare certificate data - missing required fields",
-        data: null,
-      };
-    }
-
-
-
-    let savedCertificate;
-
-    if (data.id) {
-      // First get the certificate_id and existing data from irrigation_results
-      const { data: irrigationResult, error: irrigationError } = await supabase
-        .from("irrigation_results")
-        .select("*, certificates(*)")
-        .eq("id", data.id)
-        .single();
-
-      if (irrigationError || !irrigationResult) {
-        console.error("Error fetching irrigation result:", irrigationError);
-        throw new Error(
-          `Failed to fetch irrigation result: ${irrigationError?.message}`
-        );
-      }
-
-
-      // Update existing certificate
-      const { data: updatedCertificate, error: updateError } = await supabase
-        .from("certificates")
-        .update(certificateData)
-        .eq("id", irrigationResult.certificate_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Error updating certificate:", updateError);
-        throw new Error(`Failed to update certificate: ${updateError.message}`);
-      }
-
-
-      savedCertificate = updatedCertificate;
-    } else {
-      // Create new certificate
-      const { data: newCertificate, error: saveError } = await supabase
-        .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
-
-      if (saveError || !newCertificate) {
-        console.error("Error saving new certificate:", saveError);
-        throw new Error(`Failed to save certificate: ${saveError?.message}`);
-      }
-
-
-      savedCertificate = newCertificate;
-    }
-
-    if (!savedCertificate) {
-      console.error("No certificate data after save/update");
-      throw new Error("Failed to save/update certificate");
-    }
-
     // Prepare results data
-    const resultsData = {
-      certificate_id: savedCertificate.id,
+    const resultsData: Partial<Omit<IrrigationResults, "id" | "created_at">> = {
+      // Physical Parameters
       irrigation_ph_result: data.irrigation_ph_result || null,
       irrigation_ph_remark: data.irrigation_ph_remark || null,
+      irrigation_tds_result: data.irrigation_tds_result || null,
+      irrigation_tds_remark: data.irrigation_tds_remark || null,
+      // Chemical Parameters
       irrigation_aluminium_result: data.irrigation_aluminium_result || null,
       irrigation_aluminium_remark: data.irrigation_aluminium_remark || null,
       irrigation_arsenic_result: data.irrigation_arsenic_result || null,
@@ -133,37 +73,41 @@ export async function submitIrrigationForm(
       irrigation_selenium_remark: data.irrigation_selenium_remark || null,
       irrigation_sar_result: data.irrigation_sar_result || null,
       irrigation_sar_remark: data.irrigation_sar_remark || null,
-      irrigation_tds_result: data.irrigation_tds_result || null,
-      irrigation_tds_remark: data.irrigation_tds_remark || null,
       irrigation_zinc_result: data.irrigation_zinc_result || null,
       irrigation_zinc_remark: data.irrigation_zinc_remark || null,
     };
 
+    let savedCertificate;
 
-    let resultsError;
     if (data.id) {
-      // Update existing results
-      ({ error: resultsError } = await supabase
-        .from("irrigation_results")
-        .update(resultsData)
-        .eq("id", data.id));
-    } else {
-      // Create new results
-      ({ error: resultsError } = await supabase
-        .from("irrigation_results")
-        .insert([resultsData]));
-    }
+      // Update existing certificate
+      const updateResult = await updateCertificate(
+        supabase,
+        data,
+        "irrigation"
+      );
+      savedCertificate = updateResult.certificate;
 
-    if (resultsError) {
-        console.error("Error saving/updating results:", resultsError);
-      // If results save/update fails and this was a new certificate, delete it
-      if (!data.id) {
-        await supabase
-          .from("certificates")
-          .delete()
-          .eq("id", savedCertificate.id);
-      }
-      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+
+      // Update results using the certificate's UUID
+      await updateResults(
+        supabase,
+        resultsData,
+        "irrigation_results",
+        savedCertificate.id
+      );
+    } else {
+      // Create new certificate
+      const createResult = await createCertificate(
+        supabase,
+        data,
+        "irrigation"
+      );
+      savedCertificate = createResult.certificate;
+
+      // Create new results with the certificate's UUID
+      resultsData.certificate_id = savedCertificate.id;
+      await createResults(supabase, resultsData, "irrigation_results");
     }
 
     return {
@@ -171,7 +115,6 @@ export async function submitIrrigationForm(
       data: savedCertificate,
     };
   } catch (error) {
-    console.error("=== Error in submitIrrigationForm ===", error);
     return handleError(error, "submitIrrigationForm");
   }
 }

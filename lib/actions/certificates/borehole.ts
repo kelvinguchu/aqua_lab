@@ -4,14 +4,21 @@ import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkUserAuthorization,
-  prepareCertificateData,
   handleError,
   CertificateResponse,
+  updateCertificate,
+  createCertificate,
+  updateResults,
+  createResults,
 } from "./base";
+import type { Database } from "@/lib/database.types";
+
+type BoreholeResults = Database["public"]["Tables"]["borehole_results"]["Row"];
 
 export async function submitBoreholeForm(
   data: FormValues
 ): Promise<CertificateResponse> {
+
   try {
     const supabase = await createClient();
 
@@ -29,74 +36,8 @@ export async function submitBoreholeForm(
       };
     }
 
-    const certificateData = await prepareCertificateData(data, "borehole");
-
-    // Validate the prepared data
-    if (!certificateData || !certificateData.certificate_id) {
-      console.error(
-        "Invalid certificate data after preparation:",
-        certificateData
-      );
-      return {
-        error: "Failed to prepare certificate data - missing required fields",
-        data: null,
-      };
-    }
-
-    let savedCertificate;
-
-    if (data.id) {
-      // First get the certificate_id and existing data from borehole_results
-      const { data: boreholeResult, error: boreholeError } = await supabase
-        .from("borehole_results")
-        .select("*, certificates(*)")
-        .eq("id", data.id)
-        .single();
-
-      if (boreholeError || !boreholeResult) {
-        console.error("Error fetching borehole result:", boreholeError);
-        throw new Error(
-          `Failed to fetch borehole result: ${boreholeError?.message}`
-        );
-      }
-      const { data: updatedCertificate, error: updateError } = await supabase
-        .from("certificates")
-        .update(certificateData)
-        .eq("id", boreholeResult.certificate_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Error updating certificate:", updateError);
-        throw new Error(`Failed to update certificate: ${updateError.message}`);
-      }
-
-
-      savedCertificate = updatedCertificate;
-    } else {
-      // Create new certificate
-      const { data: newCertificate, error: saveError } = await supabase
-        .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
-
-      if (saveError || !newCertificate) {
-        console.error("Error saving new certificate:", saveError);
-        throw new Error(`Failed to save certificate: ${saveError?.message}`);
-      }
-
-      savedCertificate = newCertificate;
-    }
-
-    if (!savedCertificate) {
-      console.error("No certificate data after save/update");
-      throw new Error("Failed to save/update certificate");
-    }
-
     // Prepare results data
-    const resultsData = {
-      certificate_id: savedCertificate.id,
+    const resultsData: Partial<Omit<BoreholeResults, "id" | "created_at">> = {
       // Physical Tests
       borehole_ph_result: data.borehole_ph_result || null,
       borehole_ph_remark: data.borehole_ph_remark || null,
@@ -135,41 +76,37 @@ export async function submitBoreholeForm(
         data.borehole_magnesium_hardness_result || null,
       borehole_magnesium_hardness_remark:
         data.borehole_magnesium_hardness_remark || null,
-      };
+    };
 
+    let savedCertificate;
 
-    let resultsError;
     if (data.id) {
-      // Update existing results
-      ({ error: resultsError } = await supabase
-        .from("borehole_results")
-        .update(resultsData)
-        .eq("id", data.id));
+      // Update existing certificate
+      const updateResult = await updateCertificate(supabase, data, "borehole");
+      savedCertificate = updateResult.certificate;
+
+      // Update results using the certificate's UUID
+      await updateResults(
+        supabase,
+        resultsData,
+        "borehole_results",
+        savedCertificate.id
+      );
     } else {
-      // Create new results
-      ({ error: resultsError } = await supabase
-        .from("borehole_results")
-        .insert([resultsData]));
+      // Create new certificate
+      const createResult = await createCertificate(supabase, data, "borehole");
+      savedCertificate = createResult.certificate;
+
+      // Create new results with the certificate's UUID
+      resultsData.certificate_id = savedCertificate.id;
+      await createResults(supabase, resultsData, "borehole_results");
     }
 
-    if (resultsError) {
-      console.error("Error saving/updating results:", resultsError);
-      // If results save/update fails and this was a new certificate, delete it
-      if (!data.id) {
-        await supabase
-          .from("certificates")
-          .delete()
-          .eq("id", savedCertificate.id);
-      }
-      throw new Error(`Failed to save/update results: ${resultsError.message}`);
-    }
-    
     return {
       error: null,
       data: savedCertificate,
     };
   } catch (error) {
-    console.error("=== Error in submitBoreholeForm ===", error);
     return handleError(error, "submitBoreholeForm");
   }
 }

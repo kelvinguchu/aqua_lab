@@ -4,15 +4,23 @@ import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkUserAuthorization,
-  prepareCertificateData,
   handleError,
   CertificateResponse,
+  updateCertificate,
+  createCertificate,
+  updateResults,
+  createResults,
 } from "./base";
+import type { Database } from "@/lib/database.types";
+
+type MicrobiologicalResults =
+  Database["public"]["Tables"]["microbiological_results"]["Row"];
 
 export async function submitMicrobiologicalForm(
   data: FormValues
 ): Promise<CertificateResponse> {
-  try { 
+
+  try {
     const supabase = await createClient();
 
     // Check user authorization
@@ -29,87 +37,10 @@ export async function submitMicrobiologicalForm(
       };
     }
 
-    const certificateData = await prepareCertificateData(
-      data,
-      "microbiological"
-    );
-
-    // Validate the prepared data
-    if (!certificateData || !certificateData.certificate_id) {
-      console.error(
-        "Invalid certificate data after preparation:",
-        certificateData
-      );
-      return {
-        error: "Failed to prepare certificate data - missing required fields",
-        data: null,
-      };
-    }
-
-
-
-    let savedCertificate;
-
-    if (data.id) {
-      // First get the certificate_id and existing data from microbiological_results
-      const { data: microbiologicalResult, error: microbiologicalError } =
-        await supabase
-          .from("microbiological_results")
-          .select("*, certificates(*)")
-          .eq("id", data.id)
-          .single();
-
-      if (microbiologicalError || !microbiologicalResult) {
-        console.error(
-          "Error fetching microbiological result:",
-          microbiologicalError
-        );
-        throw new Error(
-          `Failed to fetch microbiological result: ${microbiologicalError?.message}`
-        );
-      }
-
-
-      // Update existing certificate
-      const { data: updatedCertificate, error: updateError } = await supabase
-        .from("certificates")
-        .update(certificateData)
-        .eq("id", microbiologicalResult.certificate_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Error updating certificate:", updateError);
-        throw new Error(`Failed to update certificate: ${updateError.message}`);
-      }
-
-
-      savedCertificate = updatedCertificate;
-    } else {
-      // Create new certificate
-      const { data: newCertificate, error: saveError } = await supabase
-        .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
-
-      if (saveError || !newCertificate) {
-        console.error("Error saving new certificate:", saveError);
-        throw new Error(`Failed to save certificate: ${saveError?.message}`);
-      }
-
-
-      savedCertificate = newCertificate;
-    }
-
-    if (!savedCertificate) {
-      console.error("No certificate data after save/update");
-      throw new Error("Failed to save/update certificate");
-    }
-
     // Prepare results data
-    const resultsData = {
-      certificate_id: savedCertificate.id,
+    const resultsData: Partial<
+      Omit<MicrobiologicalResults, "id" | "created_at">
+    > = {
       total_viable_counts_result: data.total_viable_counts_result || null,
       total_viable_counts_remark: data.total_viable_counts_remark || null,
       coliforms_mpn_result: data.coliforms_mpn_result || null,
@@ -120,31 +51,36 @@ export async function submitMicrobiologicalForm(
       faecal_coliforms_mpn_remark: data.faecal_coliforms_mpn_remark || null,
     };
 
+    let savedCertificate;
 
-    let resultsError;
     if (data.id) {
-      // Update existing results
-      ({ error: resultsError } = await supabase
-        .from("microbiological_results")
-        .update(resultsData)
-        .eq("id", data.id));
-    } else {
-      // Create new results
-      ({ error: resultsError } = await supabase
-        .from("microbiological_results")
-        .insert([resultsData]));
-    }
+      // Update existing certificate
+      const updateResult = await updateCertificate(
+        supabase,
+        data,
+        "microbiological"
+      );
+      savedCertificate = updateResult.certificate;
 
-    if (resultsError) {
-      console.error("Error saving/updating results:", resultsError);
-      // If results save/update fails and this was a new certificate, delete it
-      if (!data.id) {
-        await supabase
-          .from("certificates")
-          .delete()
-          .eq("id", savedCertificate.id);
-      }
-      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+      // Update results using the certificate's UUID
+      await updateResults(
+        supabase,
+        resultsData,
+        "microbiological_results",
+        savedCertificate.id
+      );
+    } else {
+      // Create new certificate
+      const createResult = await createCertificate(
+        supabase,
+        data,
+        "microbiological"
+      );
+      savedCertificate = createResult.certificate;
+
+      // Create new results with the certificate's UUID
+      resultsData.certificate_id = savedCertificate.id;
+      await createResults(supabase, resultsData, "microbiological_results");
     }
 
     return {
@@ -152,7 +88,6 @@ export async function submitMicrobiologicalForm(
       data: savedCertificate,
     };
   } catch (error) {
-    console.error("=== Error in submitMicrobiologicalForm ===", error);
     return handleError(error, "submitMicrobiologicalForm");
   }
 }

@@ -4,14 +4,28 @@ import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkUserAuthorization,
-  prepareCertificateData,
   handleError,
   CertificateResponse,
+  updateCertificate,
+  createCertificate,
+  updateResults,
+  createResults,
+  CertificateType,
 } from "./base";
+import type { Database } from "@/lib/database.types";
+
+type PhysicalChemicalResults =
+  Database["public"]["Tables"]["physical_chemical_results"]["Row"];
+
+// Helper function to convert number to string or null
+const toStringOrNull = (value: number | null | undefined): string | null => {
+  return value === undefined || value === null ? null : value.toString();
+};
 
 export async function submitPhysicalChemicalForm(
   data: FormValues
 ): Promise<CertificateResponse> {
+
   try {
     const supabase = await createClient();
 
@@ -29,84 +43,10 @@ export async function submitPhysicalChemicalForm(
       };
     }
 
-    const certificateData = await prepareCertificateData(
-      data,
-      "physical_chemical"
-    );
-
-    // Validate the prepared data
-    if (!certificateData || !certificateData.certificate_id) {
-      console.error(
-        "Invalid certificate data after preparation:",
-        certificateData
-      );
-      return {
-        error: "Failed to prepare certificate data - missing required fields",
-        data: null,
-      };
-    }
-
-    let savedCertificate;
-
-    if (data.id) {
-      // First get the certificate_id and existing data from physical_chemical_results
-      const { data: physicalChemicalResult, error: physicalChemicalError } =
-        await supabase
-          .from("physical_chemical_results")
-          .select("*, certificates(*)")
-          .eq("id", data.id)
-          .single();
-
-      if (physicalChemicalError || !physicalChemicalResult) {
-        console.error(
-          "Error fetching physical chemical result:",
-          physicalChemicalError
-        );
-        throw new Error(
-          `Failed to fetch physical chemical result: ${physicalChemicalError?.message}`
-        );
-      }
-
-      // Update existing certificate    
-      const { data: updatedCertificate, error: updateError } = await supabase
-        .from("certificates")
-        .update(certificateData)
-        .eq("id", physicalChemicalResult.certificate_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Error updating certificate:", updateError);
-        throw new Error(`Failed to update certificate: ${updateError.message}`);
-      }
-
-
-      savedCertificate = updatedCertificate;
-    } else {
-      // Create new certificate
-      const { data: newCertificate, error: saveError } = await supabase
-        .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
-
-      if (saveError || !newCertificate) {
-        console.error("Error saving new certificate:", saveError);
-        throw new Error(`Failed to save certificate: ${saveError?.message}`);
-      }
-
-
-      savedCertificate = newCertificate;
-    }
-
-    if (!savedCertificate) {
-      console.error("No certificate data after save/update");
-      throw new Error("Failed to save/update certificate");
-    }
-
     // Prepare results data
-    const resultsData = {
-      certificate_id: savedCertificate.id,
+    const resultsData: Partial<
+      Omit<PhysicalChemicalResults, "id" | "created_at">
+    > = {
       // Physical Tests
       ph_result: data.ph_result || null,
       ph_remark: data.ph_remark || null,
@@ -121,7 +61,7 @@ export async function submitPhysicalChemicalForm(
       conductivity_result: data.conductivity_result || null,
       conductivity_remark: data.conductivity_remark || null,
       // Chemical Tests (Anions)
-      ph_alkalinity_result: data.ph_alkalinity_result || null,
+      ph_alkalinity_result: toStringOrNull(data.ph_alkalinity_result),
       ph_alkalinity_remark: data.ph_alkalinity_remark || null,
       total_alkalinity_result: data.total_alkalinity_result || null,
       total_alkalinity_remark: data.total_alkalinity_remark || null,
@@ -129,7 +69,7 @@ export async function submitPhysicalChemicalForm(
       chloride_remark: data.chloride_remark || null,
       fluoride_result: data.fluoride_result || null,
       fluoride_remark: data.fluoride_remark || null,
-      sulfate_result: data.sulfate_result || null,
+      sulfate_result: toStringOrNull(data.sulfate_result),
       sulfate_remark: data.sulfate_remark || null,
       nitrate_result: data.nitrate_result || null,
       nitrate_remark: data.nitrate_remark || null,
@@ -144,15 +84,15 @@ export async function submitPhysicalChemicalForm(
       potassium_remark: data.potassium_remark || null,
       sodium_result: data.sodium_result || null,
       sodium_remark: data.sodium_remark || null,
-      calcium_result: data.calcium_result || null,
+      calcium_result: toStringOrNull(data.calcium_result),
       calcium_remark: data.calcium_remark || null,
-      magnesium_result: data.magnesium_result || null,
+      magnesium_result: toStringOrNull(data.magnesium_result),
       magnesium_remark: data.magnesium_remark || null,
       iron_result: data.iron_result || null,
       iron_remark: data.iron_remark || null,
       manganese_result: data.manganese_result || null,
       manganese_remark: data.manganese_remark || null,
-      ammonia_result: data.ammonia_result || null,
+      ammonia_result: toStringOrNull(data.ammonia_result),
       ammonia_remark: data.ammonia_remark || null,
       copper_result: data.copper_result || null,
       copper_remark: data.copper_remark || null,
@@ -161,43 +101,48 @@ export async function submitPhysicalChemicalForm(
       chromium_result: data.chromium_result || null,
       chromium_remark: data.chromium_remark || null,
       // Other Parameters
-      total_hardness_result: data.total_hardness_result || null,
+      total_hardness_result: toStringOrNull(data.total_hardness_result),
       total_hardness_remark: data.total_hardness_remark || null,
-      calcium_hardness_result: data.calcium_hardness_result || null,
+      calcium_hardness_result: toStringOrNull(data.calcium_hardness_result),
       calcium_hardness_remark: data.calcium_hardness_remark || null,
-      magnesium_hardness_result: data.magnesium_hardness_result || null,
+      magnesium_hardness_result: toStringOrNull(data.magnesium_hardness_result),
       magnesium_hardness_remark: data.magnesium_hardness_remark || null,
-      silica_result: data.silica_result || null,
+      silica_result: toStringOrNull(data.silica_result),
       silica_remark: data.silica_remark || null,
       free_chlorine_result: data.free_chlorine_result || null,
       free_chlorine_remark: data.free_chlorine_remark || null,
     };
 
+    let savedCertificate;
 
-    let resultsError;
     if (data.id) {
-      // Update existing results
-      ({ error: resultsError } = await supabase
-        .from("physical_chemical_results")
-        .update(resultsData)
-        .eq("id", data.id));
-    } else {
-      // Create new results
-      ({ error: resultsError } = await supabase
-        .from("physical_chemical_results")
-        .insert([resultsData]));
-    }
+      // Update existing certificate
+      const updateResult = await updateCertificate(
+        supabase,
+        data,
+        "physical_chemical"
+      );
+      savedCertificate = updateResult.certificate;
 
-    if (resultsError) {
-      console.error("Error saving/updating results:", resultsError);
-      // If results save/update fails and this was a new certificate, delete it
-      if (!data.id) {
-        await supabase
-          .from("certificates")
-          .delete()
-          .eq("id", savedCertificate.id);
-      }
-      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+      // Update results using the certificate's UUID
+      await updateResults(
+        supabase,
+        resultsData,
+        "physical_chemical_results",
+        savedCertificate.id
+      );
+    } else {
+      // Create new certificate
+      const createResult = await createCertificate(
+        supabase,
+        data,
+        "physical_chemical"
+      );
+      savedCertificate = createResult.certificate;
+
+      // Create new results with the certificate's UUID
+      resultsData.certificate_id = savedCertificate.id;
+      await createResults(supabase, resultsData, "physical_chemical_results");
     }
 
     return {
@@ -205,7 +150,6 @@ export async function submitPhysicalChemicalForm(
       data: savedCertificate,
     };
   } catch (error) {
-    console.error("=== Error in submitPhysicalChemicalForm ===", error);
     return handleError(error, "submitPhysicalChemicalForm");
   }
 }

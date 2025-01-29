@@ -4,14 +4,21 @@ import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkUserAuthorization,
-  prepareCertificateData,
   handleError,
   CertificateResponse,
+  updateCertificate,
+  createCertificate,
+  updateResults,
+  createResults,
 } from "./base";
+import type { Database } from "@/lib/database.types";
+
+type EffluentResults = Database["public"]["Tables"]["effluent_results"]["Row"];
 
 export async function submitEffluentForm(
   data: FormValues
 ): Promise<CertificateResponse> {
+
   try {
     const supabase = await createClient();
 
@@ -29,79 +36,8 @@ export async function submitEffluentForm(
       };
     }
 
-    const certificateData = await prepareCertificateData(data, "effluent");
-
-    // Validate the prepared data
-    if (!certificateData || !certificateData.certificate_id) {
-      console.error(
-        "Invalid certificate data after preparation:",
-        certificateData
-      );
-      return {
-        error: "Failed to prepare certificate data - missing required fields",
-        data: null,
-      };
-    }
-
-
-    let savedCertificate;
-
-    if (data.id) {
-      // First get the certificate_id and existing data from effluent_results
-      const { data: effluentResult, error: effluentError } = await supabase
-        .from("effluent_results")
-        .select("*, certificates(*)")
-        .eq("id", data.id)
-        .single();
-
-      if (effluentError || !effluentResult) {
-        console.error("Error fetching effluent result:", effluentError);
-        throw new Error(
-          `Failed to fetch effluent result: ${effluentError?.message}`
-        );
-      }
-
-
-      // Update existing certificate
-      const { data: updatedCertificate, error: updateError } = await supabase
-        .from("certificates")
-        .update(certificateData)
-        .eq("id", effluentResult.certificate_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Error updating certificate:", updateError);
-        throw new Error(`Failed to update certificate: ${updateError.message}`);
-      }
-
-
-      savedCertificate = updatedCertificate;
-    } else {
-      // Create new certificate
-      const { data: newCertificate, error: saveError } = await supabase
-        .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
-
-      if (saveError || !newCertificate) {
-        console.error("Error saving new certificate:", saveError);
-        throw new Error(`Failed to save certificate: ${saveError?.message}`);
-      }
-
-
-      savedCertificate = newCertificate;
-    }
-
-    if (!savedCertificate) {
-      console.error("No certificate data after save/update");
-      throw new Error("Failed to save/update certificate");
-    }
-
     // Prepare results data
-    const resultsData = {
-      certificate_id: savedCertificate.id,
+    const resultsData: Partial<Omit<EffluentResults, "id" | "created_at">> = {
       // Physical Parameters
       effluent_ph_result: data.effluent_ph_result || null,
       effluent_ph_remark: data.effluent_ph_remark || null,
@@ -218,33 +154,37 @@ export async function submitEffluentForm(
         data.effluent_trichloroethylene_result || null,
       effluent_trichloroethylene_remark:
         data.effluent_trichloroethylene_remark || null,
+      // Microbiological Parameters
+      effluent_ecoli_result: data.effluent_ecoli_result || null,
+      effluent_ecoli_remark: data.effluent_ecoli_remark || null,
+      effluent_total_coliforms_result:
+        data.effluent_total_coliforms_result || null,
+      effluent_total_coliforms_remark:
+        data.effluent_total_coliforms_remark || null,
     };
 
+    let savedCertificate;
 
-    let resultsError;
     if (data.id) {
-      // Update existing results
-      ({ error: resultsError } = await supabase
-        .from("effluent_results")
-        .update(resultsData)
-        .eq("id", data.id));
-    } else {
-      // Create new results
-      ({ error: resultsError } = await supabase
-        .from("effluent_results")
-        .insert([resultsData]));
-    }
+      // Update existing certificate
+      const updateResult = await updateCertificate(supabase, data, "effluent");
+      savedCertificate = updateResult.certificate;
 
-    if (resultsError) {
-      console.error("Error saving/updating results:", resultsError);
-      // If results save/update fails and this was a new certificate, delete it
-      if (!data.id) {
-        await supabase
-          .from("certificates")
-          .delete()
-          .eq("id", savedCertificate.id);
-      }
-      throw new Error(`Failed to save/update results: ${resultsError.message}`);
+      // Update results using the certificate's UUID
+      await updateResults(
+        supabase,
+        resultsData,
+        "effluent_results",
+        savedCertificate.id
+      );
+    } else {
+      // Create new certificate
+      const createResult = await createCertificate(supabase, data, "effluent");
+      savedCertificate = createResult.certificate;
+
+      // Create new results with the certificate's UUID
+      resultsData.certificate_id = savedCertificate.id;
+      await createResults(supabase, resultsData, "effluent_results");
     }
 
     return {
@@ -252,7 +192,6 @@ export async function submitEffluentForm(
       data: savedCertificate,
     };
   } catch (error) {
-    console.error("=== Error in submitEffluentForm ===", error);
     return handleError(error, "submitEffluentForm");
   }
 }

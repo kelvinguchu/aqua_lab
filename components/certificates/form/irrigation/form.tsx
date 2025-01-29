@@ -15,12 +15,14 @@ interface IrrigationFormProps {
   form: UseFormReturn<FormValues>;
   onSuccess?: () => void;
   certificate?: Certificate;
+  mode: "create" | "edit";
 }
 
 export function IrrigationForm({
   form,
   onSuccess,
   certificate,
+  mode,
 }: IrrigationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
@@ -39,12 +41,15 @@ export function IrrigationForm({
     try {
       setIsSubmitting(true);
 
-      // Use the pre-generated ID or generate a new one if somehow missing
-      const certificate_id =
-        generatedId || (await generateCertificateId("irrigation"));
+      // For updates, use the existing certificate ID
+      // For new certificates, use the generated ID or generate a new one
+      const certificate_id = certificate
+        ? certificate.certificate_id
+        : generatedId || (await generateCertificateId("irrigation"));
 
       const result = await submitIrrigationForm({
         ...values,
+        id: certificate?.id, // Make sure to pass the UUID for updates
         certificate_id,
         certificate_type: "irrigation",
       });
@@ -84,7 +89,12 @@ export function IrrigationForm({
         certificateId={generatedId}
       />
       <IrrigationParameters form={form} />
-      <FormFooter form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} />
+      <FormFooter
+        form={form}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+        mode={mode}
+      />
     </div>
   );
 }

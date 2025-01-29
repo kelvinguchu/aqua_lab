@@ -3,6 +3,15 @@
 import { FormValues } from "@/components/certificates/form/types";
 import { createClient } from "@/lib/supabase/server";
 import { format, parseISO } from "date-fns";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/lib/database.types";
+
+export type CertificateType =
+  | "effluent"
+  | "borehole"
+  | "microbiological"
+  | "physical_chemical"
+  | "irrigation";
 
 // Shared utility function for date formatting
 export const formatDatabaseDate = (dateStr: string | undefined) => {
@@ -109,4 +118,142 @@ export const handleError = (error: any, context: string) => {
 export type CertificateResponse = {
   error: string | null;
   data: any | null;
+};
+
+// Base create function for certificates
+export const createCertificate = async (
+  supabase: any,
+  data: FormValues,
+  certificateType: string
+) => {
+  try {
+    // Prepare certificate data
+    const certificateData = await prepareCertificateData(data, certificateType);
+
+    // Check if certificate with this ID already exists
+    const { data: existingCertificate } = await supabase
+      .from("certificates")
+      .select("certificate_id")
+      .eq("certificate_id", certificateData.certificate_id)
+      .single();
+
+    if (existingCertificate) {
+      throw new Error(
+        `Certificate with ID ${certificateData.certificate_id} already exists`
+      );
+    }
+
+    // Create new certificate
+    const { data: newCertificate, error: saveError } = await supabase
+      .from("certificates")
+      .insert([certificateData])
+      .select()
+      .single();
+
+    if (saveError || !newCertificate) {
+      console.error("Error saving new certificate:", saveError);
+      throw new Error(`Failed to save certificate: ${saveError?.message}`);
+    }
+
+    return { certificate: newCertificate };
+  } catch (error) {
+    console.error(`Error in createCertificate for ${certificateType}:`, error);
+    throw error;
+  }
+};
+
+// Base create results function
+export const createResults = async (
+  supabase: any,
+  resultsData: any,
+  resultsTableName: string
+) => {
+  try {
+    // Create new results
+    const { error: resultsError } = await supabase
+      .from(resultsTableName)
+      .insert([resultsData]);
+
+    if (resultsError) {
+      console.error("Error saving results:", resultsError);
+      throw new Error(`Failed to save results: ${resultsError.message}`);
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error(`Error in createResults for ${resultsTableName}:`, error);
+    throw error;
+  }
+};
+
+// Base update certificate function
+export async function updateCertificate(
+  supabase: SupabaseClient<Database>,
+  data: any,
+  type: CertificateType
+) {
+
+  try {
+    const { data: existingCertificate, error: fetchError } = await supabase
+      .from("certificates")
+      .select("*")
+      .eq("certificate_id", data.certificate_id)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Certificate not found: ${fetchError.message}`);
+    }
+
+    // Prepare certificate data
+    const certificateData = await prepareCertificateData(data, type);
+
+    if (!existingCertificate) {
+      throw new Error(
+        `Certificate with ID ${certificateData.certificate_id} not found`
+      );
+    }
+
+    // Update the certificate
+    const { data: updatedCertificate, error: updateError } = await supabase
+      .from("certificates")
+      .update(certificateData)
+      .eq("certificate_id", certificateData.certificate_id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating certificate:", updateError);
+      throw new Error(`Failed to update certificate: ${updateError.message}`);
+    }
+
+    return { certificate: updatedCertificate };
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Base update results function
+export const updateResults = async (
+  supabase: any,
+  resultsData: any,
+  resultsTableName: string,
+  certificateId: string // This is the UUID from certificates table
+) => {
+  try {
+    // Update existing results
+    const { error: resultsError } = await supabase
+      .from(resultsTableName)
+      .update(resultsData)
+      .eq("certificate_id", certificateId);
+
+    if (resultsError) {
+      console.error("Error updating results:", resultsError);
+      throw new Error(`Failed to update results: ${resultsError.message}`);
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error(`Error in updateResults for ${resultsTableName}:`, error);
+    throw error;
+  }
 };
