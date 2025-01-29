@@ -18,7 +18,7 @@ interface TestParameterProps<T> {
 
 export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
   return (
-    <div className='grid grid-cols-2 gap-4'>
+    <div className='grid grid-cols-3 gap-4'>
       <FormField
         control={form.control}
         name={parameter.resultKey as keyof FormValues}
@@ -50,6 +50,14 @@ export function TestParameter<T>({ form, parameter }: TestParameterProps<T>) {
           </FormItem>
         )}
       />
+      <div className='space-y-2'>
+        <div className='text-sm font-medium text-muted-foreground'>
+          Standard
+        </div>
+        <div className='h-10 px-3 py-2 text-sm border rounded-md bg-muted/10'>
+          {parameter.standard} {parameter.unit}
+        </div>
+      </div>
     </div>
   );
 }

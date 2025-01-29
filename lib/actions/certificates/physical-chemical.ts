@@ -25,7 +25,6 @@ const toStringOrNull = (value: number | null | undefined): string | null => {
 export async function submitPhysicalChemicalForm(
   data: FormValues
 ): Promise<CertificateResponse> {
-
   try {
     const supabase = await createClient();
 
@@ -54,7 +53,9 @@ export async function submitPhysicalChemicalForm(
       turbidity_remark: data.turbidity_remark || null,
       color_result: data.color_result || null,
       color_remark: data.color_remark || null,
-      tss_result: data.tss_result || null,
+      tss_result: data.tss_result
+        ? toStringOrNull(Number(data.tss_result))
+        : null,
       tss_remark: data.tss_remark || null,
       tds_result: data.tds_result || null,
       tds_remark: data.tds_remark || null,
