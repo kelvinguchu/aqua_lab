@@ -14,6 +14,7 @@ import { ChemicalParameters } from "./chemical-parameters";
 import { HeavyMetals } from "./heavy-metals";
 import { OrganicCompounds } from "./organic-compounds";
 import { MicrobiologicalParameters } from "./microbiological-parameters";
+import { useFormCache } from "@/hooks/use-form-cache";
 
 interface EffluentFormProps {
   form: UseFormReturn<FormValues>;
@@ -31,6 +32,9 @@ export function EffluentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
   const { toast } = useToast();
+
+  // Use the form cache
+  const { clearCache } = useFormCache(form, "effluent", mode, certificate?.id);
 
   useEffect(() => {
     // Generate certificate ID when component mounts
@@ -70,6 +74,9 @@ export function EffluentForm({
       });
 
       onSuccess?.();
+
+      // Clear the cache after successful submission
+      clearCache();
     } catch (error) {
       console.error("Error saving certificate:", error);
       toast({

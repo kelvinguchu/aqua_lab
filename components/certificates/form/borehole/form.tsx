@@ -12,6 +12,7 @@ import { submitBoreholeForm } from "@/lib/actions/certificates/borehole";
 import { PhysicalTests } from "./physical-tests";
 import { ChemicalTests } from "./chemical-tests";
 import { OtherParameters } from "./other-parameters";
+import { useFormCache } from "@/hooks/use-form-cache";
 
 interface BoreholeFormProps {
   form: UseFormReturn<FormValues>;
@@ -29,6 +30,9 @@ export function BoreholeForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
   const { toast } = useToast();
+
+  // Use the form cache
+  const { clearCache } = useFormCache(form, "borehole", mode, certificate?.id);
 
   useEffect(() => {
     // Generate certificate ID when component mounts
@@ -68,6 +72,9 @@ export function BoreholeForm({
       });
 
       onSuccess?.();
+
+      // Clear the cache after successful submission
+      clearCache();
     } catch (error) {
       console.error("Error saving certificate:", error);
       toast({

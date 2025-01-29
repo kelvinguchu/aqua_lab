@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateCertificateId } from "@/lib/utils/certificate-id";
 import type { Certificate } from "@/lib/supabase";
 import { submitIrrigationForm } from "@/lib/actions/certificates/irrigation";
+import { useFormCache } from "@/hooks/use-form-cache";
 
 interface IrrigationFormProps {
   form: UseFormReturn<FormValues>;
@@ -27,6 +28,14 @@ export function IrrigationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
   const { toast } = useToast();
+
+  // Use the form cache
+  const { clearCache } = useFormCache(
+    form,
+    "irrigation",
+    mode,
+    certificate?.id
+  );
 
   useEffect(() => {
     // Generate certificate ID when component mounts
@@ -66,6 +75,9 @@ export function IrrigationForm({
       });
 
       onSuccess?.();
+
+      // Clear the cache after successful submission
+      clearCache();
     } catch (error) {
       console.error("Error saving certificate:", error);
       toast({

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateCertificateId } from "@/lib/utils/certificate-id";
 import type { Certificate } from "@/lib/supabase";
 import { submitMicrobiologicalForm } from "@/lib/actions/certificates/microbiological";
+import { useFormCache } from "@/hooks/use-form-cache";
 
 interface MicrobiologicalFormProps {
   form: UseFormReturn<FormValues>;
@@ -28,6 +29,14 @@ export function MicrobiologicalForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedId, setGeneratedId] = useState<string>();
   const { toast } = useToast();
+
+  // Use the form cache
+  const { clearCache } = useFormCache(
+    form,
+    "microbiological",
+    mode,
+    certificate?.id
+  );
 
   useEffect(() => {
     // Generate certificate ID when component mounts
@@ -67,6 +76,9 @@ export function MicrobiologicalForm({
       });
 
       onSuccess?.();
+
+      // Clear the cache after successful submission
+      clearCache();
     } catch (error) {
       console.error("Error saving certificate:", error);
       toast({

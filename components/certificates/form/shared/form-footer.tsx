@@ -26,34 +26,39 @@ export function FormFooter({
   mode,
 }: FormFooterProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Additional Information</CardTitle>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        <FormField
-          control={form.control}
-          name='comments'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Comments</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Add any additional comments or observations...'
-                  className='min-h-[100px]'
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className='relative'>
+      <Card>
+        <CardHeader>
+          <CardTitle>Additional Information</CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-6'>
+          <FormField
+            control={form.control}
+            name='comments'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Comments</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Add any additional comments or observations...'
+                    className='min-h-[100px]'
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+      </Card>
 
-        <div className='flex justify-end'>
+      {/* Sticky Footer */}
+      <div className='fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 z-50'>
+        <div className='container mx-auto px-4 sm:px-6 lg:px-8 flex justify-end'>
           {mode === "create" ? (
             <Button
               type='submit'
@@ -74,7 +79,10 @@ export function FormFooter({
             </Button>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Add padding at the bottom to prevent content from being hidden behind the sticky footer */}
+      <div className='h-24' />
+    </div>
   );
 }
