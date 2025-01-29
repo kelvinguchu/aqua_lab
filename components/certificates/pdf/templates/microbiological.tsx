@@ -43,11 +43,11 @@ const TableHeader = () => (
 );
 
 const TestCategorySection = ({
-  title,
   parameters,
   certificate,
   results,
-}: TestCategory<MicrobiologicalResults> & MicrobiologicalPDFProps) => {
+}: Omit<TestCategory<MicrobiologicalResults>, "title"> &
+  MicrobiologicalPDFProps) => {
   // Filter out empty parameters
   const nonEmptyParameters = parameters.filter(
     (param) =>
@@ -58,9 +58,6 @@ const TestCategorySection = ({
 
   return (
     <>
-      <View style={styles.categoryHeader} wrap={false}>
-        <Text>{title}</Text>
-      </View>
       {nonEmptyParameters.map((param) => (
         <View style={styles.tableRow} key={param.name} wrap={false}>
           <View style={[styles.tableCell, { width: "20%" }]}>
@@ -151,11 +148,19 @@ export function MicrobiologicalPDF({
         <DateSection dateInfo={dateInfo} />
 
         <View style={styles.table}>
+          <View
+            style={[
+              styles.categoryHeader,
+              { backgroundColor: "#f5f5f5", textAlign: "center" },
+            ]}>
+            <Text style={{ fontSize: 10, fontWeight: "heavy" }}>
+              MICROBIOLOGICAL TEST RESULTS
+            </Text>
+          </View>
+
           <TableHeader />
 
-          {/* Microbiological Tests */}
           <TestCategorySection
-            title='MICROBIOLOGICAL TESTS'
             parameters={microbiologicalTests.parameters}
             certificate={certificate}
             results={results}

@@ -192,7 +192,6 @@ export async function updateCertificate(
   data: any,
   type: CertificateType
 ) {
-
   try {
     const { data: existingCertificate, error: fetchError } = await supabase
       .from("certificates")
@@ -257,3 +256,31 @@ export const updateResults = async (
     throw error;
   }
 };
+
+// Update certificate status
+export async function updateCertificateStatus(
+  supabase: SupabaseClient<Database>,
+  certificateId: string,
+  status: "draft" | "published" | "archived"
+) {
+  try {
+    const { data: updatedCertificate, error: updateError } = await supabase
+      .from("certificates")
+      .update({ status })
+      .eq("id", certificateId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating certificate status:", updateError);
+      throw new Error(
+        `Failed to update certificate status: ${updateError.message}`
+      );
+    }
+
+    return { certificate: updatedCertificate };
+  } catch (error) {
+    console.error("Error in updateCertificateStatus:", error);
+    throw error;
+  }
+}

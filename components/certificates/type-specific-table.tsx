@@ -8,6 +8,10 @@ import {
   FileSpreadsheet,
   Search,
   Filter,
+  Pencil,
+  FileOutput,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import {
   Table,
@@ -31,6 +35,9 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { TypeSpecificEditDrawer } from "./type-specific-edit-drawer";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { toggleCertificateArchiveStatus } from "@/lib/actions/certificates/status";
+import { fetchCertificateResults } from "@/lib/actions/certificates/results";
 
 interface TypeSpecificTableProps {
   certificates: Certificate[];
@@ -43,6 +50,22 @@ interface TypeSpecificTableProps {
   onNew: () => void;
 }
 
+// Add status badge mapping
+const statusConfig = {
+  draft: {
+    variant: "secondary" as const,
+    label: "Draft",
+  },
+  published: {
+    variant: "default" as const,
+    label: "Published",
+  },
+  archived: {
+    variant: "outline" as const,
+    label: "Archived",
+  },
+};
+
 export function TypeSpecificTable({
   certificates,
   type,
@@ -52,6 +75,7 @@ export function TypeSpecificTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCertificate, setEditingCertificate] =
     useState<Certificate | null>(null);
+  const router = useRouter();
 
   // Filter certificates based on search query
   const filteredCertificates = certificates.filter((cert) =>
@@ -66,6 +90,16 @@ export function TypeSpecificTable({
         title: "Generating PDF",
         description: "Please wait while we generate your report...",
       });
+
+      // Fetch the corresponding results
+      const resultsResponse = await fetchCertificateResults(
+        certificate.id,
+        type
+      );
+
+      if (resultsResponse.error) {
+        throw new Error(resultsResponse.error);
+      }
 
       // Create a display version of the certificate for PDF
       const certificateDisplayData = {
@@ -92,14 +126,32 @@ export function TypeSpecificTable({
         ),
       };
 
+      // Convert type from underscore to hyphen for file path
+      const templateType = type.replace("_", "-");
+
       // Import the correct PDF template based on certificate type
-      const { default: Template } = await import(
-        `@/components/certificates/pdf/templates/${type}.tsx`
+      const templateModule = await import(
+        `@/components/certificates/pdf/templates/${templateType}.tsx`
       );
+      const Template =
+        templateModule[
+          `${type
+            .split("_")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join("")}PDF`
+        ];
+
+      if (!Template) {
+        throw new Error(`PDF template not found for type: ${type}`);
+      }
+
       const { pdf } = await import("@react-pdf/renderer");
 
       const blob = await pdf(
-        <Template certificate={certificateDisplayData} />
+        <Template
+          certificate={certificateDisplayData}
+          results={resultsResponse.data}
+        />
       ).toBlob();
       const url = URL.createObjectURL(blob);
 
@@ -124,6 +176,39 @@ export function TypeSpecificTable({
         variant: "destructive",
         title: "Error",
         description: "Failed to generate report. Please try again.",
+      });
+    }
+  };
+
+  const handleArchiveToggle = async (certificate: Certificate) => {
+    try {
+      const result = await toggleCertificateArchiveStatus(
+        certificate.id,
+        certificate.status as "draft" | "published" | "archived"
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: "Success",
+        description: `Certificate ${
+          certificate.status === "archived" ? "unarchived" : "archived"
+        } successfully`,
+      });
+
+      // Refresh the page to show updated status
+      router.refresh();
+    } catch (error) {
+      console.error("Error toggling archive status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update certificate status. Please try again.",
       });
     }
   };
@@ -199,6 +284,7 @@ export function TypeSpecificTable({
                   <TableHead className='font-semibold'>
                     Date of Analysis
                   </TableHead>
+                  <TableHead className='font-semibold'>Status</TableHead>
                   <TableHead className='text-right font-semibold'>
                     Actions
                   </TableHead>
@@ -210,12 +296,37 @@ export function TypeSpecificTable({
                     key={cert.id}
                     className='hover:bg-muted/50 transition-colors'>
                     <TableCell className='font-medium'>
-                      {cert.certificate_id}
+                      {cert.certificate_id || "N/A"}
                     </TableCell>
-                    <TableCell>{cert.sample_id}</TableCell>
-                    <TableCell>{cert.sample_source}</TableCell>
+                    <TableCell>{cert.sample_id || "Not specified"}</TableCell>
                     <TableCell>
-                      {format(new Date(cert.date_of_analysis), "dd/MM/yyyy")}
+                      {cert.sample_source || "Source not specified"}
+                    </TableCell>
+                    <TableCell>
+                      {cert.date_of_analysis
+                        ? format(new Date(cert.date_of_analysis), "dd/MM/yyyy")
+                        : "Date not set"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          statusConfig[cert.status as keyof typeof statusConfig]
+                            .variant
+                        }
+                        className={cn(
+                          "capitalize",
+                          cert.status === "draft" &&
+                            "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
+                          cert.status === "published" &&
+                            "bg-green-100 text-green-800 hover:bg-green-100/80",
+                          cert.status === "archived" &&
+                            "bg-gray-100 text-gray-800 hover:bg-gray-100/80"
+                        )}>
+                        {
+                          statusConfig[cert.status as keyof typeof statusConfig]
+                            .label
+                        }
+                      </Badge>
                     </TableCell>
                     <TableCell className='text-right'>
                       <DropdownMenu>
@@ -227,17 +338,40 @@ export function TypeSpecificTable({
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end' className='w-[160px]'>
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuContent
+                          align='end'
+                          className='w-[190px] p-2 shadow-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-md'>
+                          <DropdownMenuLabel className='font-semibold text-sm px-2 py-1.5 text-gray-500 dark:text-gray-400'>
+                            Actions
+                          </DropdownMenuLabel>
                           <DropdownMenuItem
                             onClick={() => setEditingCertificate(cert)}
-                            className='cursor-pointer'>
-                            Edit certificate
+                            className='cursor-pointer relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-blue-50 dark:hover:bg-blue-900/50 text-gray-700 dark:text-gray-300'>
+                            <Pencil className='h-4 w-4 text-blue-500' />
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => generatePDF(cert)}
-                            className='cursor-pointer'>
+                            className='cursor-pointer relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-blue-50 dark:hover:bg-blue-900/50 text-gray-700 dark:text-gray-300'>
+                            <FileOutput className='h-4 w-4 text-indigo-500' />
                             Generate report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleArchiveToggle(cert)}
+                            className={cn(
+                              "cursor-pointer relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-gray-700 dark:text-gray-300",
+                              cert.status === "archived"
+                                ? "hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                                : "hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                            )}>
+                            {cert.status === "archived" ? (
+                              <ArchiveRestore className='h-4 w-4 text-emerald-500' />
+                            ) : (
+                              <Archive className='h-4 w-4 text-amber-500' />
+                            )}
+                            {cert.status === "archived"
+                              ? "Unarchive"
+                              : "Archive"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
