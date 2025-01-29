@@ -28,3 +28,29 @@ export async function toggleCertificateArchiveStatus(
     return handleError(error, "toggleCertificateArchiveStatus");
   }
 }
+
+export async function publishCertificate(
+  certificateId: string,
+  currentStatus: "draft" | "published" | "archived"
+) {
+  try {
+    // Only draft certificates can be published
+    if (currentStatus !== "draft") {
+      throw new Error("Only draft certificates can be published");
+    }
+
+    const supabase = await createClient();
+    const result = await updateCertificateStatus(
+      supabase,
+      certificateId,
+      "published"
+    );
+
+    return {
+      error: null,
+      data: result.certificate,
+    };
+  } catch (error) {
+    return handleError(error, "publishCertificate");
+  }
+}

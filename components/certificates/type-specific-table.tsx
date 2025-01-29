@@ -12,6 +12,7 @@ import {
   FileOutput,
   Archive,
   ArchiveRestore,
+  RefreshCw,
 } from "lucide-react";
 import {
   Table,
@@ -36,7 +37,10 @@ import { useToast } from "@/hooks/use-toast";
 import { TypeSpecificEditDrawer } from "./type-specific-edit-drawer";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { toggleCertificateArchiveStatus } from "@/lib/actions/certificates/status";
+import {
+  toggleCertificateArchiveStatus,
+  publishCertificate,
+} from "@/lib/actions/certificates/status";
 import { fetchCertificateResults } from "@/lib/actions/certificates/results";
 
 interface TypeSpecificTableProps {
@@ -48,6 +52,7 @@ interface TypeSpecificTableProps {
     | "irrigation"
     | "borehole";
   onNew: () => void;
+  onRefresh: () => void;
 }
 
 // Add status badge mapping
@@ -70,19 +75,49 @@ export function TypeSpecificTable({
   certificates,
   type,
   onNew,
+  onRefresh,
 }: TypeSpecificTableProps) {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCertificate, setEditingCertificate] =
     useState<Certificate | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
 
-  // Filter certificates based on search query
+  // Calculate certificate counts
+  const certificateCounts = {
+    total: certificates.length,
+    published: certificates.filter((cert) => cert.status === "published")
+      .length,
+    draft: certificates.filter((cert) => cert.status === "draft").length,
+    archived: certificates.filter((cert) => cert.status === "archived").length,
+  };
+
+  // Filter certificates based on search query only
   const filteredCertificates = certificates.filter((cert) =>
     Object.values(cert).some((value) =>
       value?.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
+
+  // Function to handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    toast({
+      title: "Refreshing",
+      description: "Updating table data...",
+    });
+
+    // Refetch the data
+    await onRefresh();
+
+    // Reset the refreshing state and show success toast
+    setIsRefreshing(false);
+    toast({
+      title: "Refreshed",
+      description: "Table data has been updated",
+    });
+  };
 
   const generatePDF = async (certificate: Certificate) => {
     try {
@@ -90,6 +125,21 @@ export function TypeSpecificTable({
         title: "Generating PDF",
         description: "Please wait while we generate your report...",
       });
+
+      // If certificate is in draft, publish it
+      if (certificate.status === "draft") {
+        const publishResult = await publishCertificate(
+          certificate.id,
+          certificate.status
+        );
+
+        if (publishResult.error) {
+          throw new Error(publishResult.error);
+        }
+
+        // Update the certificate data with the published status
+        certificate = publishResult.data;
+      }
 
       // Fetch the corresponding results
       const resultsResponse = await fetchCertificateResults(
@@ -168,14 +218,23 @@ export function TypeSpecificTable({
 
       toast({
         title: "Success",
-        description: "Report generated successfully",
+        description:
+          certificate.status === "draft"
+            ? "Certificate published and report generated successfully"
+            : "Report generated successfully",
       });
+
+      // Refresh the page to show updated status
+      router.refresh();
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate report. Please try again.",
       });
     }
   };
@@ -240,6 +299,40 @@ export function TypeSpecificTable({
   return (
     <>
       <div className='space-y-4'>
+        {/* Certificate Statistics */}
+        <div className='grid grid-cols-4 gap-4 mb-6'>
+          <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm'>
+            <div className='text-sm text-gray-500 dark:text-gray-400'>
+              Total Certificates
+            </div>
+            <div className='text-2xl font-bold'>{certificateCounts.total}</div>
+          </div>
+          <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm'>
+            <div className='text-sm text-green-600 dark:text-green-400'>
+              Published
+            </div>
+            <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+              {certificateCounts.published}
+            </div>
+          </div>
+          <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm'>
+            <div className='text-sm text-yellow-600 dark:text-yellow-400'>
+              Draft
+            </div>
+            <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>
+              {certificateCounts.draft}
+            </div>
+          </div>
+          <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm'>
+            <div className='text-sm text-gray-600 dark:text-gray-400'>
+              Archived
+            </div>
+            <div className='text-2xl font-bold text-gray-600 dark:text-gray-400'>
+              {certificateCounts.archived}
+            </div>
+          </div>
+        </div>
+
         <div className='flex items-center justify-between gap-4'>
           <div className='flex items-center flex-1 max-w-sm space-x-2'>
             <div className='relative flex-1'>
@@ -253,6 +346,16 @@ export function TypeSpecificTable({
             </div>
             <Button variant='outline' size='icon' className='h-9 w-9'>
               <Filter className='h-4 w-4' />
+            </Button>
+            <Button
+              variant='outline'
+              size='icon'
+              className='h-9 w-9'
+              onClick={handleRefresh}
+              disabled={isRefreshing}>
+              <RefreshCw
+                className={cn("h-4 w-4", isRefreshing && "animate-spin")}
+              />
             </Button>
           </div>
           <Button

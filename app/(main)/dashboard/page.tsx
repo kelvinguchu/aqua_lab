@@ -54,9 +54,22 @@ const certificateTypes: CertificateType[] = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const [selectedType, setSelectedType] =
-    useState<CertificateType>("physical_chemical");
+  const [selectedType, setSelectedType] = useState<CertificateType>(() => {
+    // Try to get the saved tab from localStorage on initial render
+    if (typeof window !== "undefined") {
+      const savedTab = localStorage.getItem("dashboard-certificate-type");
+      return (savedTab as CertificateType) || "physical_chemical";
+    }
+    return "physical_chemical";
+  });
   const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false);
+
+  // Save selected type to localStorage whenever it changes
+  const handleTypeChange = (value: string) => {
+    const newType = value as CertificateType;
+    setSelectedType(newType);
+    localStorage.setItem("dashboard-certificate-type", newType);
+  };
 
   // Use useQueries to fetch data for all certificate types simultaneously
   const queries = useQueries({
@@ -106,6 +119,9 @@ export default function Dashboard() {
   // Get the certificates for the selected type
   const selectedTypeIndex = certificateTypes.indexOf(selectedType);
   const certificates = queries[selectedTypeIndex].data || [];
+  const refetchSelectedType = () => {
+    queries[selectedTypeIndex].refetch();
+  };
 
   return (
     <main className='container mx-auto px-4 sm:px-6 lg:px-8 pt-24'>
@@ -114,9 +130,7 @@ export default function Dashboard() {
           <Tabs
             defaultValue='physical_chemical'
             value={selectedType}
-            onValueChange={(value) =>
-              setSelectedType(value as CertificateType)
-            }>
+            onValueChange={handleTypeChange}>
             <TabsList className='grid w-full grid-cols-5'>
               <TabsTrigger value='physical_chemical'>
                 Physical Chemical
@@ -131,6 +145,7 @@ export default function Dashboard() {
                 certificates={certificates}
                 type={selectedType}
                 onNew={() => setIsNewDrawerOpen(true)}
+                onRefresh={refetchSelectedType}
               />
             </TabsContent>
           </Tabs>
