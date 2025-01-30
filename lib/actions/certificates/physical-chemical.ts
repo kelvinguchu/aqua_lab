@@ -101,6 +101,8 @@ export async function submitPhysicalChemicalForm(
       zinc_remark: data.zinc_remark || null,
       chromium_result: data.chromium_result || null,
       chromium_remark: data.chromium_remark || null,
+      free_carbon_result: data.free_carbon_result || null,
+      free_carbon_remark: data.free_carbon_remark || null,
       // Other Parameters
       total_hardness_result: toStringOrNull(data.total_hardness_result),
       total_hardness_remark: data.total_hardness_remark || null,

@@ -134,6 +134,18 @@ const cationParameters: TestParameterWithMeta<PhysicalChemicalResults>[] = [
     remarkKey: "chromium_remark",
     severity: "high",
   },
+  {
+    id: "free-carbon",
+    name: "Free Carbon",
+    type: "number",
+    category: "chemical_cations",
+    method: "ASL/TM/HACH/8023",
+    unit: "mg/L Cr",
+    standard: "NS",
+    resultKey: "free_carbon_result",
+    remarkKey: "free_carbon_remark",
+    severity: "high",
+  },
 ];
 
 export function ChemicalCations({ form }: ChemicalCationsProps) {

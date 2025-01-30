@@ -96,6 +96,8 @@ export interface FormValues {
   zinc_remark?: string;
   chromium_result?: number;
   chromium_remark?: string;
+  free_carbon_result?: number;
+  free_carbon_remark?: string;
 
   // Other Parameters
   total_hardness_result?: number;

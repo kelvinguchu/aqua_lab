@@ -140,6 +140,8 @@ export interface Database {
           zinc_remark: string | null;
           chromium_result: number | null;
           chromium_remark: string | null;
+          free_carbon_result: number | null;
+          free_carbon_remark: string | null;
           // Other Parameters
           total_hardness_result: string | null;
           total_hardness_remark: string | null;
