@@ -13,7 +13,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { FormValues } from "../types";
 import { UseFormReturn } from "react-hook-form";
 import type { Certificate } from "@/lib/supabase";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   Select,
@@ -34,6 +34,9 @@ export function HeaderInformation({
   certificate,
   certificateId,
 }: HeaderInformationProps) {
+  // State to track whether to show the effluent type selector
+  const [showEffluentSelector, setShowEffluentSelector] = useState(false);
+
   // Check if we're generating a certificate ID
   const isGenerating = !certificate && !certificateId;
 
@@ -44,9 +47,13 @@ export function HeaderInformation({
     "Generating..."
   ).toUpperCase();
 
-  // Get the certificate type
+  // Watch for changes to the certificate type
   const certificateType = form.watch("certificate_type");
-  const isEffluent = certificateType === "effluent";
+
+  // Update the state when the certificate type changes
+  useEffect(() => {
+    setShowEffluentSelector(certificateType === "effluent");
+  }, [certificateType]);
 
   return (
     <Card>
@@ -256,7 +263,7 @@ export function HeaderInformation({
         />
 
         {/* Effluent Type Selector - Only show for effluent certificates */}
-        {isEffluent && (
+        {showEffluentSelector && (
           <FormField
             control={form.control}
             name='effluent_type'

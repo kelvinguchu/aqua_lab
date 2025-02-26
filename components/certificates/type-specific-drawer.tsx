@@ -75,7 +75,11 @@ export function TypeSpecificDrawer({
   type,
 }: TypeSpecificDrawerProps) {
   const FormComponent = formComponents[type];
-  const form = useForm<FormValues>();
+  const form = useForm<FormValues>({
+    defaultValues: {
+      certificate_type: type,
+    },
+  });
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

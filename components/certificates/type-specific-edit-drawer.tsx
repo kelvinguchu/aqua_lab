@@ -88,7 +88,11 @@ export function TypeSpecificEditDrawer({
 }: TypeSpecificEditDrawerProps) {
   const [formData, setFormData] = useState<FormValues | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const form = useForm<FormValues>();
+  const form = useForm<FormValues>({
+    defaultValues: {
+      certificate_type: type
+    }
+  });
 
   useEffect(() => {
     async function loadFormData() {
