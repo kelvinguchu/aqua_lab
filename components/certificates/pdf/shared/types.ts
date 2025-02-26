@@ -26,6 +26,7 @@ export interface Certificate {
   comments: string | null;
   status: "draft" | "published" | "archived";
   created_at: string;
+  effluent_type?: "environment" | "public_sewers" | null;
 }
 
 // Physical Chemical Results
