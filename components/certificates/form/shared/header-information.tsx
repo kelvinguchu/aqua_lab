@@ -15,6 +15,13 @@ import { UseFormReturn } from "react-hook-form";
 import type { Certificate } from "@/lib/supabase";
 import React from "react";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface HeaderInformationProps {
   form: UseFormReturn<FormValues>;
@@ -36,6 +43,10 @@ export function HeaderInformation({
     certificateId ||
     "Generating..."
   ).toUpperCase();
+
+  // Get the certificate type
+  const certificateType = form.watch("certificate_type");
+  const isEffluent = certificateType === "effluent";
 
   return (
     <Card>
@@ -243,6 +254,38 @@ export function HeaderInformation({
             </FormItem>
           )}
         />
+
+        {/* Effluent Type Selector - Only show for effluent certificates */}
+        {isEffluent && (
+          <FormField
+            control={form.control}
+            name='effluent_type'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Effluent Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select effluent type' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='environment'>
+                      Environment Discharge
+                    </SelectItem>
+                    <SelectItem value='public_sewers'>
+                      Public Sewers Discharge
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </CardContent>
     </Card>
   );

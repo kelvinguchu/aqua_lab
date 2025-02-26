@@ -40,6 +40,7 @@ export interface FormValues {
   date_of_report_issue?: string;
   comments?: string;
   status?: "draft" | "final";
+  effluent_type?: "environment" | "public_sewers";
 
   // Physical Tests
   ph_result?: number;

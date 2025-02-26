@@ -1,15 +1,59 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormValues, TestParameterWithMeta, EffluentResults } from "../types";
+import { FormValues, TestParameterWithMeta } from "../types";
 import { UseFormReturn } from "react-hook-form";
 import { TestParameter } from "../shared/test-parameter";
 
 interface OrganicCompoundsProps {
   form: UseFormReturn<FormValues>;
+  effluent_type?: "environment" | "public_sewers";
 }
 
-const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
+// Define standards for each effluent type
+const environmentStandards = {
+  trichloroethane_111: "3.0",
+  trichloroethane_112: "0.06",
+  dichloroethylene_11: "0.2",
+  dichloroethane_12: "0.04",
+  dichloropropene_13: "0.02",
+  benzene: "0.01",
+  carbon_tetrachloride: "0.02",
+  dichloroethylene_cis_12: "0.4",
+  dichloromethane: "0.02",
+  simazine: "0.002",
+  tetrachloroethylene: "0.04",
+  thiobencarb: "0.02",
+  thiram: "0.06",
+  trichloroethylene: "0.03",
+};
+
+const publicSewersStandards = {
+  trichloroethane_111: "5.0",
+  trichloroethane_112: "0.2",
+  dichloroethylene_11: "0.5",
+  dichloroethane_12: "0.1",
+  dichloropropene_13: "0.1",
+  benzene: "0.1",
+  carbon_tetrachloride: "0.1",
+  dichloroethylene_cis_12: "1.0",
+  dichloromethane: "0.1",
+  simazine: "0.01",
+  tetrachloroethylene: "0.1",
+  thiobencarb: "0.1",
+  thiram: "0.2",
+  trichloroethylene: "0.1",
+  calcium_carbide: "Nil",
+  chloroform: "Nil",
+  inflammable_solvents: "Nil",
+  radioactive_residues: "Nil",
+  degreasing_solvents: "Nil",
+};
+
+// Common parameters for both effluent types
+const getCommonOrganicCompoundParameters = (
+  standards: any
+): TestParameterWithMeta[] => [
   {
     id: "effluent_111_trichloroethane",
     name: "1,1,1-Trichloroethane",
@@ -17,9 +61,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "3.0",
-    resultKey: "effluent_111_trichloroethane_result",
-    remarkKey: "effluent_111_trichloroethane_remark",
+    standard: standards.trichloroethane_111,
+    resultKey: "effluent_111_trichloroethane_result" as string,
+    remarkKey: "effluent_111_trichloroethane_remark" as string,
     severity: "high",
   },
   {
@@ -29,9 +73,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.06",
-    resultKey: "effluent_112_trichloroethane_result",
-    remarkKey: "effluent_112_trichloroethane_remark",
+    standard: standards.trichloroethane_112,
+    resultKey: "effluent_112_trichloroethane_result" as string,
+    remarkKey: "effluent_112_trichloroethane_remark" as string,
     severity: "high",
   },
   {
@@ -41,9 +85,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.2",
-    resultKey: "effluent_11_dichloroethylene_result",
-    remarkKey: "effluent_11_dichloroethylene_remark",
+    standard: standards.dichloroethylene_11,
+    resultKey: "effluent_11_dichloroethylene_result" as string,
+    remarkKey: "effluent_11_dichloroethylene_remark" as string,
     severity: "high",
   },
   {
@@ -53,9 +97,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.04",
-    resultKey: "effluent_12_dichloroethane_result",
-    remarkKey: "effluent_12_dichloroethane_remark",
+    standard: standards.dichloroethane_12,
+    resultKey: "effluent_12_dichloroethane_result" as string,
+    remarkKey: "effluent_12_dichloroethane_remark" as string,
     severity: "high",
   },
   {
@@ -65,9 +109,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.02",
-    resultKey: "effluent_13_dichloropropene_result",
-    remarkKey: "effluent_13_dichloropropene_remark",
+    standard: standards.dichloropropene_13,
+    resultKey: "effluent_13_dichloropropene_result" as string,
+    remarkKey: "effluent_13_dichloropropene_remark" as string,
     severity: "high",
   },
   {
@@ -77,9 +121,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.01",
-    resultKey: "effluent_benzene_result",
-    remarkKey: "effluent_benzene_remark",
+    standard: standards.benzene,
+    resultKey: "effluent_benzene_result" as string,
+    remarkKey: "effluent_benzene_remark" as string,
     severity: "high",
   },
   {
@@ -89,9 +133,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.02",
-    resultKey: "effluent_carbon_tetrachloride_result",
-    remarkKey: "effluent_carbon_tetrachloride_remark",
+    standard: standards.carbon_tetrachloride,
+    resultKey: "effluent_carbon_tetrachloride_result" as string,
+    remarkKey: "effluent_carbon_tetrachloride_remark" as string,
     severity: "high",
   },
   {
@@ -101,9 +145,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.4",
-    resultKey: "effluent_cis_12_dichloroethylene_result",
-    remarkKey: "effluent_cis_12_dichloroethylene_remark",
+    standard: standards.dichloroethylene_cis_12,
+    resultKey: "effluent_cis_12_dichloroethylene_result" as string,
+    remarkKey: "effluent_cis_12_dichloroethylene_remark" as string,
     severity: "high",
   },
   {
@@ -113,9 +157,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.02",
-    resultKey: "effluent_dichloromethane_result",
-    remarkKey: "effluent_dichloromethane_remark",
+    standard: standards.dichloromethane,
+    resultKey: "effluent_dichloromethane_result" as string,
+    remarkKey: "effluent_dichloromethane_remark" as string,
     severity: "high",
   },
   {
@@ -125,9 +169,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.002",
-    resultKey: "effluent_simazine_result",
-    remarkKey: "effluent_simazine_remark",
+    standard: standards.simazine,
+    resultKey: "effluent_simazine_result" as string,
+    remarkKey: "effluent_simazine_remark" as string,
     severity: "high",
   },
   {
@@ -137,9 +181,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.04",
-    resultKey: "effluent_tetrachloroethylene_result",
-    remarkKey: "effluent_tetrachloroethylene_remark",
+    standard: standards.tetrachloroethylene,
+    resultKey: "effluent_tetrachloroethylene_result" as string,
+    remarkKey: "effluent_tetrachloroethylene_remark" as string,
     severity: "high",
   },
   {
@@ -149,9 +193,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.02",
-    resultKey: "effluent_thiobencarb_result",
-    remarkKey: "effluent_thiobencarb_remark",
+    standard: standards.thiobencarb,
+    resultKey: "effluent_thiobencarb_result" as string,
+    remarkKey: "effluent_thiobencarb_remark" as string,
     severity: "high",
   },
   {
@@ -161,9 +205,9 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.06",
-    resultKey: "effluent_thiram_result",
-    remarkKey: "effluent_thiram_remark",
+    standard: standards.thiram,
+    resultKey: "effluent_thiram_result" as string,
+    remarkKey: "effluent_thiram_remark" as string,
     severity: "high",
   },
   {
@@ -173,14 +217,108 @@ const organicCompoundParameters: TestParameterWithMeta<EffluentResults>[] = [
     category: "organic_compounds",
     method: "ASL/TM/HACH/8013",
     unit: "mg/L",
-    standard: "0.03",
-    resultKey: "effluent_trichloroethylene_result",
-    remarkKey: "effluent_trichloroethylene_remark",
+    standard: standards.trichloroethylene,
+    resultKey: "effluent_trichloroethylene_result" as string,
+    remarkKey: "effluent_trichloroethylene_remark" as string,
     severity: "high",
   },
 ];
 
-export function OrganicCompounds({ form }: OrganicCompoundsProps) {
+// Public Sewers-specific parameters
+const getPublicSewersSpecificParameters = (
+  standards: any
+): TestParameterWithMeta[] => [
+  {
+    id: "effluent_calcium_carbide",
+    name: "Calcium Carbide",
+    type: "text",
+    category: "organic_compounds",
+    method: "ASL/TM/HACH/8013",
+    unit: "",
+    standard: standards.calcium_carbide,
+    resultKey: "effluent_calcium_carbide_result" as string,
+    remarkKey: "effluent_calcium_carbide_remark" as string,
+    severity: "high",
+  },
+  {
+    id: "effluent_chloroform",
+    name: "Chloroform",
+    type: "text",
+    category: "organic_compounds",
+    method: "ASL/TM/HACH/8013",
+    unit: "",
+    standard: standards.chloroform,
+    resultKey: "effluent_chloroform_result" as string,
+    remarkKey: "effluent_chloroform_remark" as string,
+    severity: "high",
+  },
+  {
+    id: "effluent_inflammable_solvents",
+    name: "Inflammable Solvents",
+    type: "text",
+    category: "organic_compounds",
+    method: "ASL/TM/HACH/8013",
+    unit: "",
+    standard: standards.inflammable_solvents,
+    resultKey: "effluent_inflammable_solvents_result" as string,
+    remarkKey: "effluent_inflammable_solvents_remark" as string,
+    severity: "high",
+  },
+  {
+    id: "effluent_radioactive_residues",
+    name: "Radioactive Residues",
+    type: "text",
+    category: "organic_compounds",
+    method: "ASL/TM/HACH/8013",
+    unit: "",
+    standard: standards.radioactive_residues,
+    resultKey: "effluent_radioactive_residues_result" as string,
+    remarkKey: "effluent_radioactive_residues_remark" as string,
+    severity: "high",
+  },
+  {
+    id: "effluent_degreasing_solvents",
+    name: "Degreasing Solvents",
+    type: "text",
+    category: "organic_compounds",
+    method: "ASL/TM/HACH/8013",
+    unit: "",
+    standard: standards.degreasing_solvents,
+    resultKey: "effluent_degreasing_solvents_result" as string,
+    remarkKey: "effluent_degreasing_solvents_remark" as string,
+    severity: "high",
+  },
+];
+
+const getOrganicCompoundParameters = (
+  effluent_type?: "environment" | "public_sewers"
+): TestParameterWithMeta[] => {
+  // Default to environment standards if no type is specified
+  const standards =
+    effluent_type === "public_sewers"
+      ? publicSewersStandards
+      : environmentStandards;
+
+  // Get common parameters
+  const commonParameters = getCommonOrganicCompoundParameters(standards);
+
+  // Add type-specific parameters
+  if (effluent_type === "public_sewers") {
+    return [
+      ...commonParameters,
+      ...getPublicSewersSpecificParameters(standards),
+    ];
+  } else {
+    return commonParameters;
+  }
+};
+
+export function OrganicCompounds({
+  form,
+  effluent_type,
+}: OrganicCompoundsProps) {
+  const organicCompoundParameters = getOrganicCompoundParameters(effluent_type);
+
   return (
     <Card>
       <CardHeader>

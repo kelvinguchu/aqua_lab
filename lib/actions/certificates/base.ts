@@ -73,6 +73,10 @@ export const prepareCertificateData = async (
     date_of_report_issue: dateOfReportIssue,
     comments: data.comments || null,
     status: "draft" as const,
+    // Add effluent_type if this is an effluent certificate
+    ...(certificateType === "effluent" && {
+      effluent_type: data.effluent_type || "environment",
+    }),
   };
 
   // Validate the prepared data

@@ -33,6 +33,7 @@ export interface Database {
           comments: string | null;
           status: "draft" | "published" | "archived";
           created_at: string;
+          effluent_type: "environment" | "public_sewers" | null;
         };
         Insert: {
           id?: string;
@@ -57,6 +58,7 @@ export interface Database {
           comments?: string | null;
           status?: "draft" | "published" | "archived";
           created_at?: string;
+          effluent_type?: "environment" | "public_sewers" | null;
         };
         Update: {
           id?: string;
@@ -81,6 +83,7 @@ export interface Database {
           comments?: string | null;
           status?: "draft" | "published" | "archived";
           created_at?: string;
+          effluent_type?: "environment" | "public_sewers" | null;
         };
       };
       physical_chemical_results: {

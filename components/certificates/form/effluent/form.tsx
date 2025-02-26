@@ -36,6 +36,9 @@ export function EffluentForm({
   // Use the form cache
   const { clearCache } = useFormCache(form, "effluent", mode, certificate?.id);
 
+  // Watch the effluent type
+  const effluent_type = form.watch("effluent_type");
+
   useEffect(() => {
     // Generate certificate ID when component mounts
     if (!certificate) {
@@ -44,6 +47,13 @@ export function EffluentForm({
         .catch(console.error);
     }
   }, [certificate]);
+
+  // Set default effluent type if not set
+  useEffect(() => {
+    if (!effluent_type && mode === "create") {
+      form.setValue("effluent_type", "environment");
+    }
+  }, [effluent_type, form, mode]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -99,11 +109,11 @@ export function EffluentForm({
         certificate={certificate}
         certificateId={generatedId}
       />
-      <PhysicalParameters form={form} />
-      <ChemicalParameters form={form} />
-      <HeavyMetals form={form} />
-      <OrganicCompounds form={form} />
-      <MicrobiologicalParameters form={form} />
+      <PhysicalParameters form={form} effluent_type={effluent_type} />
+      <ChemicalParameters form={form} effluent_type={effluent_type} />
+      <HeavyMetals form={form} effluent_type={effluent_type} />
+      <OrganicCompounds form={form} effluent_type={effluent_type} />
+      <MicrobiologicalParameters form={form} effluent_type={effluent_type} />
       <FormFooter
         form={form}
         onSubmit={onSubmit}

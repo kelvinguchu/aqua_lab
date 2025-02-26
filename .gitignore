@@ -49,5 +49,5 @@ supabase.sql
 # cursor
 .cursorrules
 
-# supabase
-001_certificate_tables.sql
+# migrations
+migrations/
